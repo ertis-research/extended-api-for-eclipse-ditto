@@ -2,7 +2,6 @@ const express = require('express')
 const swaggerJSDoc = require('swagger-jsdoc')
 const swaggerUi = require('swagger-ui-express')
 const config = require('./config.js')
-require('./database.js')
 const router = require('./router.js')
 const app = express()
 
