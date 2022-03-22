@@ -1,22 +1,40 @@
-const { attChildren, attParent } = require('./consts')
+const { attChildren, attParent, attIsType } = require('./consts')
 
-const queryRootThings = "/search/things?filter=and(not(eq(attributes/isType,true)),or(not(exists(attributes/" + attParent + ")),eq(attributes/" + attParent + ",null)))"
+const queryRootThings = (isType) => {
+    if (isType) {
+        return "/search/things?filter=and(eq(attributes/" + attIsType + ",true),or(not(exists(attributes/" + attParent + ")),eq(attributes/" + attParent + ",null)))"
+    } else {
+        return "/search/things?filter=and(not(eq(attributes/" + attIsType + ",true)),or(not(exists(attributes/" + attParent + ")),eq(attributes/" + attParent + ",null)))"
+    }
+} 
 const queryThings = "/things"
 
-const queryAttributePath = (thingId, attributePath) => {
-    return queryThings + "/" + thingId + "/attributes/" + attributePath 
+const conditionIsType = (isType) => {
+    return "?condition=eq(attributes/" + attIsType + "," + isType + ")"
 }
 
-const queryParent = (thingId) => {
-    return queryAttributePath(thingId, attParent)
+const queryThingWithId = (thingId, isType) => {
+    return queryThings + "/" + thingId + conditionIsType(isType)
 }
 
-const queryChildren = (thingId) => {
-    return queryAttributePath(thingId, attChildren) 
+const queryAttributePath = (thingId, attributePath, isType) => {
+    return queryThings + "/" + thingId + "/attributes/" + attributePath + conditionIsType(isType)
 }
 
-const querySpecificChildren = (thingId, attribute) => {
-    return queryAttributePath(thingId, attChildren + "/" + attribute)
+const queryParent = (thingId, isType) => {
+    return queryAttributePath(thingId, attParent, isType)
+}
+
+const queryChildren = (thingId, isType) => {
+    return queryAttributePath(thingId, attChildren, isType) 
+}
+
+const querySpecificChildren = (thingId, childrenId, isType) => {
+    return queryAttributePath(thingId, attChildren + "/" + childrenId, isType)
+}
+
+const querySpecificParent = (thingId, parentId) => {
+    return queryAttributePath(thingId, attParent + "/" + parentId, true)
 }
 
 module.exports = {
@@ -24,5 +42,7 @@ module.exports = {
     queryThings : queryThings,
     queryParent : queryParent,
     queryChildren : queryChildren,
-    querySpecificChildren : querySpecificChildren
+    querySpecificChildren : querySpecificChildren,
+    queryThingWithId : queryThingWithId,
+    querySpecificParent : querySpecificParent
 }

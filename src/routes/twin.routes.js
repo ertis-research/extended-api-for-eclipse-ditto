@@ -1,6 +1,6 @@
 //const express = require('express')
 const router = require("express-promise-router")()
-const ThingController = require('../controllers/thing.controller.js')
+const TwinController = require('../controllers/twin.controller.js')
 
 //const router = Router()
 
@@ -45,7 +45,7 @@ const ThingController = require('../controllers/thing.controller.js')
  *           description: Bad request
  * 
  */
-router.get("/", ThingController.getRootThings)
+router.get("/", TwinController.getRootThings)
 
 /**
  * @swagger
@@ -65,19 +65,19 @@ router.get("/", ThingController.getRootThings)
  *           description: The request could not be completed due to missing authentication.
  * 
  */
-router.post("/", ThingController.postThing)
+router.post("/", TwinController.postThing)
 
-router.get("/:thingId", ThingController.getThingById)
+router.get("/:thingId", TwinController.getThingById)
 
-router.put("/:thingId", ThingController.putThingById)
+router.put("/:thingId", TwinController.putThingById)
 
-router.patch("/:thingId", ThingController.patchThingById)
+router.patch("/:thingId", TwinController.patchThingById)
 
-router.delete("/:thingId", ThingController.deleteOnlyThingById)
+router.delete("/:thingId", TwinController.deleteOnlyThingById)
 
-router.delete("/:thingId/children", ThingController.deleteThingAndChildrenById)
+router.delete("/:thingId/children", TwinController.deleteThingAndChildrenById)
 
-router.put("/:thingId/children/:childrenId", ThingController.putChildrenOfThing)
+router.put("/:thingId/children/:childrenId", TwinController.putChildrenOfThing)
 
 
 module.exports = router
