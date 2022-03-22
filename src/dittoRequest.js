@@ -39,20 +39,17 @@ const executeRequestWithData = async (functionRequest, path = "", data = {}, con
                 }
             }
         )
-        console.log(response)
         return {
             status : response.status,
             message : response.data
         }
     } catch (err) {
-        console.log(err)
         if (err.response != undefined) {
             return {
                 status : err.response.status,
                 message : err.response.statusText
             }
         } else {
-            console.log(err)
             return {
                 status : 500,
                 message : "ERROR"

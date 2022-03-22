@@ -1,75 +1,52 @@
-const ThingType = require('../models/thingType.model.js')
-const getController = require('./base.controller.js')
-const axios = require('axios').default
+// IMPORTS
+// ------------------------------------------------------------------------
+const {
+    deleteThingWithoutChildren,
+    rootGET,
+    thingPOST,
+    thingByIdGET,
+    thingPUT,
+    thingPATCH,
+    childrenOfThingPUT,
+    childrenOfThingGET,
+    thingDELETE
+} = require('./common.controller.js')
 
-const thingTypeController = getController(ThingType, "thingTypeId")
 
-const saveThingFromType = async (req, res) => {
-    const twinId = req.params.twinId
-    const thingTypeId = req.params.thingTypeId
-    const thingId = req.params.thingId
-    const body = req.body
+// REQUESTS
+// ------------------------------------------------------------------------
+const typesController = {
+    getRootTypes: async (req, res) => {
+        await rootGET(req, res, true)
+    },
 
-    if(thingId.includes(":")){
-        return res.status(400).json({
-            message: "Only the name of the thing is required. Do not include the namespace, it will be added automatically."
-        })
-    }
+    postType: async (req, res) => {
+        await thingPOST(req, res, true, null, {}, null)
+    },
 
-    try {
-        const thingType = await ThingType.findOne({thingTypeId : thingTypeId})
-        
-        if (!thingType) {
-            return res.status(404).json({
-              message: "ThingType not found"
-            })
-        }
+    getTypeById: async (req, res) => {
+        await thingByIdGET(req, res, true)
+    },
 
-        var attributes = (thingType.attributes) ? thingType.attributes : {}
-        var features = (thingType.features) ? thingType.features : {}
-        
-        if(!body.attributes && body.attributes !== {}) {
-            attributes = (!attributes) ? body.attributes : Object.assign({}, attributes, body.attributes)
-        }
-        
-        attributes = {
-            thingTypeId : thingTypeId,
-            ...attributes
-        }
-        
-        if(!body.features && body.features !== {}) {
-            features = (!features) ? body.features : Object.assign({}, features, body.features)
-        }
+    putTypeById: async (req, res) => {
+        await thingPUT(req, res, true, null, {}, null)
+    },
 
-        const newThing = {
-            policyId: (!body.policyId) ? thingType.policyId : body.policyId,
-            definition: body.definition,
-            attributes: attributes,
-            features : features
-        }
+    patchTypeById: async (req, res) => {
+        await thingPATCH(req, res, true)
+    },
 
-        const token = Buffer.from(`${process.env.DITTO_USERNAME}:${process.env.DITTO_PASSWORD}`, 'utf8').toString('base64')
+    deleteTypeById: async (req, res) => {
+        await thingDELETE(req, res, true)
+    },
 
-        const params = {
-            headers: {
-                'Authorization' : `Basic ${token}`,
-                'Content-Type' : "application/json"
-            }
-        }
+    putChildrenOfType: async (req, res) => {
+        await childrenOfThingPUT(req, res, true, null, {})
+    },
 
-        const response = await axios.put(
-            process.env.DITTO_URI_THINGS + twinId + ":" + thingId,
-            newThing,
-            params
-        )
-
-        res.status(response.status).json(response.data)
-    } catch (err) {
-        res.status(500).json({ message: err })
+    getChildrenOfType: async (req, res) => {
+        await childrenOfThingGET(req, res, true)
     }
 }
 
-module.exports = {
-    ...thingTypeController, 
-    saveThingFromType: saveThingFromType
-}
+module.exports = typesController
