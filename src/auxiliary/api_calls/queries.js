@@ -1,4 +1,4 @@
-const { attChildren, attParent, attIsType } = require('./consts')
+const { attChildren, attParent, attIsType } = require('../attributes/consts')
 
 const queryRootThings = (isType) => {
     if (isType) {
@@ -36,6 +36,12 @@ const querySpecificChildren = (thingId, childrenId, isType) => {
 const querySpecificParent = (thingId, parentId) => {
     return queryAttributePath(thingId, attParent + "/" + parentId, true)
 }
+
+/*
+const queryListOfThings = (list) => {
+    return queryThings + "?ids=" + list.join(',')
+}
+*/
 
 module.exports = {
     queryRootThings : queryRootThings,

@@ -1,60 +1,142 @@
 // IMPORTS
 // ------------------------------------------------------------------------
 const {
-    rootGET,
-    thingPOST,
-    thingByIdGET,
-    thingPUT,
-    thingPATCH,
-    childrenOfThingPUT,
-    childrenOfThingGET,
-    thingDELETE,
-    thingAndChildrenDELETE,
-} = require('./common.controller.js')
+    getAllRootThings,
+    createThingWithoutSpecificId,
+    getThing,
+    updateThing,
+    patchThing,
+    deleteThingWithoutChildren,
+    deleteThingAndChildren,
+    updateThingAndHisParent,
+    getAllChildrenOfThing,
+    getAllParentOfThing,
+    unlinkAllParentOfThing,
+    unlinkAllChildrenOfThing,
+    duplicateThing
+} = require('../auxiliary/api_calls/dittoThing.js')
 
 
 // REQUESTS
 // ------------------------------------------------------------------------
-const thingController = {
-    getRootThings: async (req, res) => {
-        await rootGET(req, res, false)
+
+const isType = false
+
+const twinController = {
+
+    //-------------------
+    // /twins
+    //-------------------
+    getRootTwins: async (req, res) => {
+        response = await getAllRootThings(isType)
+        res.status(response.status || 500).json(response.message)
     },
 
-    postThing: async (req, res) => {
-        await thingPOST(req, res, false, null, {}, null)
+    postTwin: async (req, res) => {
+        const body = req.body
+        response = await createThingWithoutSpecificId(body, isType, null, {}, null)
+        res.status(response.status || 500).json(response.message)
     },
 
-    getThingById: async (req, res) => {
-        await thingByIdGET(req, res, false)
+    //-------------------
+    // /twins/{twinId}
+    //-------------------
+
+    getTwinById: async (req, res) => {
+        const twinId = req.params.twinId
+        response = await getThing(twinId, isType)
+        res.status(response.status || 500).json(response.message)
     },
 
-    putThingById: async (req, res) => {
-        await thingPUT(req, res, false, null, {}, null)
+    putTwinById: async (req, res) => {
+        const body = req.body
+        const twinId = req.params.twinId
+        response = await updateThing(twinId, body, isType, null, {}, null)
+        res.status(response.status || 500).json(response.message)
     },
 
-    patchThingById: async (req, res) => {
-        await thingPATCH(req, res)
+    patchTwinById: async (req, res) => {
+        const body = req.body
+        const twinId = req.params.twinId
+        response = await patchThing(twinId, body, isType)
+        res.status(response.status || 500).json(response.message)
     },
 
-    deleteThingAndChildrenById: async (req, res) => {
-        await thingAndChildrenDELETE(req, res, false)
+    deleteOnlyTwinById: async (req, res) => {
+        const twinId = req.params.twinId
+        response = await deleteThingWithoutChildren(twinId, isType)
+        res.status(response.status || 500).json(response.message)
     },
 
-    deleteOnlyThingById: async (req, res) => {
-        await thingDELETE(req, res, false)
+    //-------------------
+    // /twins/{twinId}/children
+    //-------------------
+
+    getChildrenOfTwinById: async (req, res) => {
+        const twinId = req.params.twinId
+        response = await getAllChildrenOfThing(twinId, isType)
+        res.status(response.status || 500).json(response.message)
     },
 
-    putChildrenOfThing: async (req, res) => {
-        await childrenOfThingPUT(req, res, false, null, {})
+    deleteTwinWithChildrenById: async (req, res) => {
+        const twinId = req.params.twinId
+        response = await deleteThingAndChildren(twinId, isType)
+        res.status(response.status || 500).json(response.message)
     },
 
-    getChildrenOfThing: async (req, res) => {
-        await childrenOfThingGET(req, res, false)
+    //-------------------
+    // /twins/{twinId}/children/{childId}
+    //-------------------
+
+    putChildrenOfTwin: async (req, res) => {
+        const body = req.body
+        const twinId = req.params.twinId
+        const childId = req.params.childId
+        response = await updateThingAndHisParent(twinId, childId, body, isType, null, {})
+        res.status(response.status || 500).json(response.message)
     },
 
-    unbindChildOfThing: async (req, res) => {
-        await unbindChildOfThingPATCH(req, res, false)
+    //-------------------
+    // /twins/{twinId}/children/unlink
+    //-------------------
+
+    unlinkAllChildrenOfTwin: async (req, res) => {
+        const twinId = req.params.twinId
+        response = await unlinkAllChildrenOfThing(twinId, isType)
+        res.status(response.status || 500).json(response.message)
+    },
+
+    //-------------------
+    // /twins/{twinId}/parent
+    //-------------------
+
+    getParentOfTwin: async (req, res) => {
+        const twinId = req.params.twinId
+        response = await getAllParentOfThing(twinId, isType)
+        res.status(response.status || 500).json(response.message)
+    },
+
+    //-------------------
+    // /twins/{twinId}/parent/unlink
+    //-------------------
+
+    unlinkParentAndTwin: async (req, res) => {
+        const twinId = req.params.twinId
+        response = await unlinkAllParentOfThing(twinId, isType)
+        res.status(response.status || 500).json(response.message)
+    },
+
+    //-------------------
+    // /twins/{twinId}/duplicate/{newId}
+    //-------------------
+
+    duplicateTwin: async (req, res) => {
+        const twinId = req.params.twinId
+        const copyId = req.params.copyId
+        const body = req.body
+        response = await duplicateThing(twinId, copyId, body, isType)
+        res.status(response.status || 500).json(response.message)
     }
 }
 
-module.exports = thingController
+module.exports = twinController

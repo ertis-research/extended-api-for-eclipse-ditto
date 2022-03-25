@@ -6,15 +6,35 @@ router.get("/", TypeController.getRootTypes)
 
 router.post("/", TypeController.postType)
 
-router.get("/:thingId", TypeController.getTypeById)
+// typeId
+router.get("/:typeId", TypeController.getTypeById)
 
-router.put("/:thingId", TypeController.putTypeById)
+router.put("/:typeId", TypeController.putTypeById)
 
-router.patch("/:thingId", TypeController.patchTypeById)
+router.patch("/:typeId", TypeController.patchTypeById)
 
-router.delete("/:thingId", TypeController.deleteTypeById)
+router.delete("/:typeId", TypeController.deleteTypeById)
 
-router.put("/:thingId/children/:childrenId", TypeController.putChildrenOfType)
+// Children
+router.get("/:typeId/children", TypeController.getChildrenOfTypeById)
+
+// Children + childId
+router.put("/:typeId/children/:childId", TypeController.putChildrenOfType)
+
+// Children + childId + unlink
+router.patch("/:typeId/children/:childId/unlink", TypeController.unlinkOneChildrenOfType)
+
+// Children unlink
+router.patch("/:typeId/children/unlink", TypeController.unlinkAllChildrenOfType)
+
+// Parent
+router.get("/:typeId/parent", TypeController.getParentsOfType)
+
+// Parent unlink
+router.patch("/:typeId/parent/unlink", TypeController.unlinkAllParentsOfType)
+
+//Create twin
+router.post("/:typeId/create/:twinId", TypeController.createTwinFromType)
 
 
 module.exports = router

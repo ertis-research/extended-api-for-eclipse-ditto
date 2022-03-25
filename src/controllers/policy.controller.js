@@ -1,4 +1,4 @@
-const Policy = require('../models/policy.model.js')
+const Policy = require('../auxiliary/database/models/policy.model')
 
 const policyController = {
     getAll: async (req, res) => {

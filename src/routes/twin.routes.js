@@ -7,10 +7,10 @@ const TwinController = require('../controllers/twin.controller.js')
 /**
  * @swagger
  * definitions:
- *      Thing:
+ *      Twin:
  *       type: object
  *       properties:
- *          thingId:
+ *          twinId:
  *              type: string
  *          policyId:
  *              type: string
@@ -25,59 +25,77 @@ const TwinController = require('../controllers/twin.controller.js')
 /**
  * @swagger
  * tags:
- *  name: Things
- *  description: Manage every thing
+ *  name: Twins
+ *  description: Manage every twin
  */
 
 /**
  * @swagger
- * /things:
+ * /twins:
  *   get:
- *      summary: Retrieve multiple things with specified IDs
- *      tags: [Things]
- *      description: Returns all things passed in by the required parameter ids
+ *      summary: Retrieve multiple twins with specified IDs
+ *      tags: [Twins]
+ *      description: Returns all twins passed in by the required parameter ids
  *      produces:
  *         - application/json
  *      responses:
  *         200:
- *           description: The successfully completed request contains as its result the first 200 for the user available Things. The Things are sorted in the same order as the Thing IDs were provided in the ids parameter.
+ *           description: The successfully completed request contains as its result the first 200 for the user available twins. The twins are sorted in the same order as the twin IDs were provided in the ids parameter.
  *         400:
  *           description: Bad request
  * 
  */
-router.get("/", TwinController.getRootThings)
+router.get("/", TwinController.getRootTwins)
 
 /**
  * @swagger
- * /things:
+ * /twins:
  *   post:
- *      summary: Create a new thing
- *      tags: [Things]
- *      description: Creates a thing with a default thingId and a default policyId.
+ *      summary: Create a new twin
+ *      tags: [Twins]
+ *      description: Creates a twin with a default twinId and a default policyId.
  *      produces:
  *         - application/json
  *      responses:
  *         200:
- *           description: The thing was successfully created.
+ *           description: The twin was successfully created.
  *         400:
  *           description: Bad request
  *         401:
  *           description: The request could not be completed due to missing authentication.
  * 
  */
-router.post("/", TwinController.postThing)
+router.post("/", TwinController.postTwin)
 
-router.get("/:thingId", TwinController.getThingById)
 
-router.put("/:thingId", TwinController.putThingById)
+// twinId
+router.get("/:twinId", TwinController.getTwinById)
 
-router.patch("/:thingId", TwinController.patchThingById)
+router.put("/:twinId", TwinController.putTwinById)
 
-router.delete("/:thingId", TwinController.deleteOnlyThingById)
+router.patch("/:twinId", TwinController.patchTwinById)
 
-router.delete("/:thingId/children", TwinController.deleteThingAndChildrenById)
+router.delete("/:twinId", TwinController.deleteOnlyTwinById)
 
-router.put("/:thingId/children/:childrenId", TwinController.putChildrenOfThing)
+// Children
+router.get("/:twinId/children", TwinController.getChildrenOfTwinById)
+
+router.delete("/:twinId/children", TwinController.deleteTwinWithChildrenById)
+
+// Children + childId
+router.put("/:twinId/children/:childId", TwinController.putChildrenOfTwin)
+
+// Children unlink
+router.patch("/:twinId/children/unlink", TwinController.unlinkAllChildrenOfTwin)
+
+// Parent
+router.get("/:twinId/parent", TwinController.getParentOfTwin)
+
+// Parent unlink
+router.patch("/:twinId/parent/unlink", TwinController.unlinkParentAndTwin)
+
+//Duplicate
+router.post("/:twinId/duplicate/:copyId", TwinController.duplicateTwin)
 
 
 module.exports = router

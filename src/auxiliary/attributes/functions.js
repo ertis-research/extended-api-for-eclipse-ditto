@@ -43,6 +43,17 @@ const removePrivateAttributesForThing = (thing) => {
     return thing
 }
 
+const removeRestrictedAttributesForThing = (thing) => {
+    //Elimino los atributos privados en caso de que existan
+    restrictedAttributes.forEach((rAtt) => {
+        if(thing != null && thing.hasOwnProperty("attributes") && thing.attributes.hasOwnProperty(rAtt)){
+            delete thing.attributes[rAtt]
+        }
+    })
+
+    return thing
+}
+
 function isIterable (value) {
     return Symbol.iterator in Object(value);
 }
@@ -93,7 +104,7 @@ const getChildrenOfThing = (thing) => {
     return thing.attributes[attChildren]
 }
 
-const getParentOfThing = (thing) => {
+const getParentAttribute = (thing) => {
     return (thing.attributes.hasOwnProperty(attParent)) ? thing.attributes[attParent] : null
 }
 
@@ -109,7 +120,7 @@ const setParent = (thing, parentId, isType) => {
 }
 
 const isParent = (thing, parent, isType) => {
-    thing_parent = getParentOfThing(thing)
+    thing_parent = getParentAttribute(thing)
     if(isType){
         return thing_parent.hasOwnProperty(parent)
     } else {
@@ -117,7 +128,6 @@ const isParent = (thing, parent, isType) => {
     }
     
 }
-
 
 const initAttributes = (thing, isType = false, type = null, children = {}, parent = null) => {
     thing.attributes[attIsType] = isType
@@ -132,10 +142,12 @@ module.exports = {
     checkForRestrictedAttributes : checkForRestrictedAttributes,
     removePrivateAttributesForThing : removePrivateAttributesForThing,
     removePrivateAttributesForListOfThings : removePrivateAttributesForListOfThings,
+    removeRestrictedAttributesForThing : removeRestrictedAttributesForThing,
     copyRestrictedAttributes : copyRestrictedAttributes,
     restrictedAttributesToString : restrictedAttributesToString,
     initAttributes : initAttributes,
     isParent : isParent,
-    getParentOfThing : getParentOfThing,
+    getParentAttribute : getParentAttribute,
+    getChildrenOfThing : getChildrenOfThing,
     setParent : setParent
 }
