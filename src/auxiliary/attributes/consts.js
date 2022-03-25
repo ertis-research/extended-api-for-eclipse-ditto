@@ -12,7 +12,6 @@ const restrictedAttributes = [attChildren, attIsType, attParent, attType]
 const recommendedAttributes = [attName, attTextDescription, attImage]
 
 
-
 module.exports = {
     privateAttributes : privateAttributes,
     restrictedAttributes : restrictedAttributes,
