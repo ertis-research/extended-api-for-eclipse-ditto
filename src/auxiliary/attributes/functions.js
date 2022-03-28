@@ -77,7 +77,7 @@ const removePrivateAttributesForListOfThings = (list) => {
 
 const copyRestrictedAttributes = (from, to, isType_default, type_default, children_default, parent_default) => {
     //Copio los atriburtos restringidos de un thing a otro thing
-    if (to == null) to = {}
+    if (to == null || to == undefined) to = {}
     if (!to.hasOwnProperty("attributes")) to.attributes = {}
     
     restrictedAttributes.forEach(rAtt => {
@@ -122,9 +122,9 @@ const setParent = (thing, parentId, isType) => {
 const isParent = (thing, parent, isType) => {
     thing_parent = getParentAttribute(thing)
     if(isType){
-        return thing_parent.hasOwnProperty(parent)
+        return thing_parent !== undefined && thing_parent.hasOwnProperty(parent)
     } else {
-        return thing_parent == parent
+        return thing_parent !== undefined && thing_parent === parent
     }
     
 }
