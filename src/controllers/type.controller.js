@@ -52,7 +52,7 @@ const typeController = {
     putTypeById: async (req, res) => {
         const body = req.body
         const typeId = req.params.typeId
-        response = await updateThing(typeId, body, isType, null, {}, {})
+        response = await updateThing(typeId, body, isType, null, {}, null)
         res.status(response.status || 500).json(response.message)
     },
 
