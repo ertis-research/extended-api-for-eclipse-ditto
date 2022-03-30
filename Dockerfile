@@ -2,9 +2,7 @@ FROM node:13
 
 ENV HOST=localhost
 ENV PORT=8080
-ENV MONGO_URI=mongodb://10.110.31.229:27017/extended-ditto
 ENV MONGO_URI_POLICIES=mongodb://10.110.31.229:27017/policies
-ENV MONGO_URI_THINGS=mongodb://10.110.31.229:27017/things
 ENV DITTO_URI_THINGS=http://research.adabyron.uma.es:8054/api/2/things/
 ENV DITTO_USERNAME=ditto
 ENV DITTO_PASSWORD=ditto
