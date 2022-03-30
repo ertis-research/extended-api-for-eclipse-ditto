@@ -9,7 +9,7 @@ const app = express()
 const swaggerOptions = {
     swaggerDefinition: {
         info: {
-            title: 'Ditto extended API',
+            title: 'Extended API for Eclipse Ditto',
             description: 'Extended API for Eclipse Ditto',
             servers: ["http://" + process.env.HOST + ":" + process.env.PORT]
         },
@@ -33,7 +33,7 @@ router(app)
 
 //starting the server
 app.listen(app.get("port"), function () {
-    console.log("Ditto extended API listening")
+    console.log("Extended API for Eclipse Ditto listening")
 })
 
 module.exports = app
