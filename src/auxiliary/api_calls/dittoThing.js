@@ -1,10 +1,9 @@
 const { executePOST, executePATCH, executeDELETE, executeGET, executePUT } = require('./requests_for_ditto')
-const { queryThings, queryParent, queryChildren, querySpecificChildren, queryRootThings, queryThingWithId, querySpecificParent } = require('./queries')
-const { removeRestrictedAttributesForThing, getChildrenOfThing } = require('../attributes/functions')
+const { queryThings, queryAllThings,  queryParent, queryChildren, queryRootThings, queryThingWithId, querySpecificParent } = require('./queries')
+const { removeRestrictedAttributesForThing } = require('../attributes/functions')
 const {
     checkForRestrictedAttributes, 
     copyRestrictedAttributes,
-    restrictedAttributesToString,
     initAttributes,
     isParent,
     setParent,
@@ -33,7 +32,7 @@ const isObject = (obj) => {
 const merge = (target, source) => {
     // Miramos si la propiedad es también un objeto para copiarla de forma iterativa
     for (const key of Object.keys(source)) {
-      if (source[key] instanceof Object) Object.assign(source[key], merge(target[key], source[key]))
+        if (source[key] instanceof Object) Object.assign(source[key], merge(target[key], source[key]))
     }
     // Combina el objeto resultante con el objeto de entrada
     Object.assign(target || {}, source)
@@ -48,9 +47,10 @@ const getNameInThingId = (thingId) => {
 const getChildrenAndParent = async (thingId, isType) => {
     const responseChildren = await getAllChildrenOfThing(thingId, isType)
     const responseParent = await getAllParentOfThing(thingId, isType)
-    
+    console.log(responseChildren)
+    console.log(responseParent)
     var childrenList = responseChildren.message
-    childrenList = childrenList != null && childrenList != undefined && statusIsCorrect(responseChildren.status) && isObject(childrenList) ? childrenList : {}
+    childrenList = childrenList != null && childrenList != undefined && statusIsCorrect(responseChildren.status) && (isObject(childrenList) || Array.isArray(childrenList)) ? childrenList : {}
     var parentId = statusIsCorrect(responseParent.status) ? responseParent.message : null
 
     return {
@@ -59,6 +59,7 @@ const getChildrenAndParent = async (thingId, isType) => {
     }
 }
 
+/*
 const addThingToChildrenList = async (thingId, parentId, isType, response) => {
     const responsePATCH = await executePATCH(querySpecificChildren(parentId, thingId, isType), "1")
     return addMessageIfStatusIsNotCorrect(responsePATCH, response, "Error adding the thing to the list of children of" + parentId + "\n")
@@ -68,14 +69,15 @@ const removeThingFromChildrenList = async (thingId, parentId, isType, response) 
     const responsePATCH = await executePATCH(querySpecificChildren(parentId, thingId, isType), "null")
     return addMessageIfStatusIsNotCorrect(responsePATCH, response, "Error when removing the thing from the list of children of " + parentId + "\n")
 }
+*/
 
-const setParentOfThing = async (thingId, parentId, isType, response) => {
-    const responsePATCH = (!isType) ? await executePATCH(queryParent(thingId, isType), '"' + parentId + '"') : await executePATCH(querySpecificParent(thingId, parentId), "1") //Puede que sea necesario ponerle "" entre parentId
+const setParentOfThing = async (thingId, parentId, isType, response, numChild) => {
+    const responsePATCH = (!isType) ? await executePATCH(queryParent(thingId, isType), '"' + parentId + '"') : await executePATCH(querySpecificParent(thingId, parentId), numChild.toString()) //Puede que sea necesario ponerle "" entre parentId
     return addMessageIfStatusIsNotCorrect(responsePATCH, response, "Error setting " + parentId + " as parent of thing\n")
 }
 
-const removeParentOfThing = async (thingId, parentId, isType, response) => {
-    const path = (!isType) ? queryParent(thingId, isType) : querySpecificParent(thingId, parentId)
+const removeParentOfThing = async (thingId, parentId, isType, response, full_remove=false) => {
+    const path = (!isType || full_remove) ? queryParent(thingId, isType) : querySpecificParent(thingId, parentId)
     const responsePATCH = await executePATCH(path, "null")
     return addMessageIfStatusIsNotCorrect(responsePATCH, response, "Error deleting " + ((isType) ? parentId + " as" : "") + " parent of thing " + thingId)
 }
@@ -84,8 +86,14 @@ const removeParentOfThing = async (thingId, parentId, isType, response) => {
 // ---------------------------------------------
 // GET
 // ---------------------------------------------
-const getAllRootThings = async (isType) => {
-    return modifyResponseList(await executeGET(queryRootThings(isType)))
+const getAllRootThings = async (isType, options="") => {
+    if (options !== "") options = "&option=" + options
+    return modifyResponseList(await executeGET(queryRootThings(isType, options)))
+}
+
+const getAllThings = async (isType, options="") => {
+    if (options !== "") options = "&option=" + options
+    return modifyResponseList(await executeGET(queryAllThings(isType, options)))
 }
 
 const getThing = async (thingId, isType) => {
@@ -93,7 +101,14 @@ const getThing = async (thingId, isType) => {
 }
 
 const getAllChildrenOfThing = async (thingId, isType) => {
-    return await executeGET(queryChildren(thingId, isType))
+    var res = modifyResponseList(await executeGET(queryChildren(thingId, isType)))
+    children = []
+    while (res.message.hasOwnProperty("cursor")) {
+        children = children.concat(res.message.items)
+        res = modifyResponseList(await executeGET(queryChildren(thingId, isType, res.message.cursor)))
+    }
+    res.message = children.concat(res.message)
+    return res
 }
 
 const getAllParentOfThing = async(thingId, isType) => {
@@ -104,37 +119,37 @@ const getAllParentOfThing = async(thingId, isType) => {
 // ---------------------------------------------
 // CREATE OR UPDATE
 // ---------------------------------------------
-const createThingWithoutSpecificId = async (data, isType, type, children, parent) => {  
+const createThingWithoutSpecificId = async (data, isType, type, parent) => {  
     if(!checkForRestrictedAttributes) return RestrictedAttributesResponse //Comprobar que la definición no contiene atributos restringidos
-    if(data != null) data = initAttributes(data, isType, type, children, parent) //Inicializar los atributos restringidos
+    if(data != null) data = initAttributes(data, isType, type, parent) //Inicializar los atributos restringidos
     return modifyResponseThing(await executePOST(queryThings, data))
 }
 
-const updateThing = async (thingId, body, isType, type, children_default={}, parentId=null) => {
+const updateThing = async (thingId, body, isType, type, parentId=null, numChild=1) => {
     var finalResponse = Object.assign({}, SuccessfulResponse)
     
     const onlySetFamily = body == null || body == undefined || Object.keys(body).length === 0 //Si no hay body (hay que actualizar solo el padre)
-    const parentValue = (isType && parentId != null) ? {[parentId] : 1} : parentId
+    const parentValue = (isType && parentId != null) ? {[parentId] : numChild} : parentId
 
     if(!onlySetFamily && !checkForRestrictedAttributes(body)) return RestrictedAttributesResponse
 
     const responseGet = await executeGET(queryThingWithId(thingId, isType))
     if (statusIsCorrect(responseGet.status)) { //Si ya existe
-        body = copyRestrictedAttributes(responseGet.message, body, isType, type, children_default, undefined) //Copio los atributos restringido que ya tenía en el nuevo body
-        if(!isParent(body, parentId, isType)){ //Compruebo si el padre asignado y el nuevo son el mismo
-            actual_parent = getParentAttribute(body)
-            if(!isType && actual_parent != null) finalResponse = removeThingFromChildrenList(thingId, actual_parent, isType, finalResponse) //Si es un twin entonces elimino el thing de la lista de hijos del padre
+        body = copyRestrictedAttributes(responseGet.message, body, isType, type, undefined) //Copio los atributos restringido que ya tenía en el nuevo body
+        if(!isParent(body, parentId, isType, numChild)){ //Compruebo si el padre asignado y el nuevo son el mismo
+            //actual_parent = getParentAttribute(body)
+            //if(!isType && actual_parent != null) finalResponse = removeThingFromChildrenList(thingId, actual_parent, isType, finalResponse) //Si es un twin entonces elimino el thing de la lista de hijos del padre
             if(onlySetFamily){
-                finalResponse = setParentOfThing(thingId, parentId, isType, finalResponse)
+                finalResponse = setParentOfThing(thingId, parentId, isType, finalResponse, numChild)
             } else {
                 body = setParent(body, parentId, isType) //Seteo el padre para que se actualice con el PUT
             }
-            finalResponse = addThingToChildrenList(thingId, parentId, isType, finalResponse) //Aniado el thingId a los hijos del padre
+            //finalResponse = addThingToChildrenList(thingId, parentId, isType, finalResponse) //Aniado el thingId a los hijos del padre
         }
 
     } else if(!onlySetFamily){ //Si no existe y hay body
-            body = initAttributes(body, isType, type, children_default, parentValue) //Inicializo attributos restringidos
-            if(parentValue != null) finalResponse = addThingToChildrenList(thingId, parentId, isType, finalResponse)
+        body = initAttributes(body, isType, type, parentValue) //Inicializo attributos restringidos
+            //if(parentValue != null) finalResponse = addThingToChildrenList(thingId, parentId, isType, finalResponse)
     } else {
         return BodyCannotBeEmptyResponse
     }
@@ -155,53 +170,66 @@ const patchThing = async (thingId, data, isType) => {
 }
 
 const duplicateThing = async(thingId, newThingId, data, isType) => {
-    return await duplicateThingRecursive(thingId, newThingId, data, null, isType)
+    return await duplicateThingRecursive(thingId, null, newThingId, data, null, isType)
 }
 
-const duplicateThingRecursive = async(thingId, newThingId, data, parentId, isType) => {
-    var getThingResponse = await getThing(thingId, isType)
+const duplicateThingRecursive = async(thingId, thingData, newThingId, data, parentId, isType, realParentId=null) => {  
+    // Si data tiene atributos restringidos no se ejecuta la consulta
     if(data != null && !checkForRestrictedAttributes(data)) return RestrictedAttributesResponse
-    if (statusIsCorrect(getThingResponse.status)){
-        var finalResponse = Object.assign({}, SuccessfulResponse)
-        
-        var thingData = getThingResponse.message
-        const children = getChildrenOfThing(thingData)
-        if (data != null) thingData = merge(thingData, data)
-        thingData = removeRestrictedAttributesForThing(thingData)
-        if (thingData.hasOwnProperty("thingId")) delete thingData["thingId"]
-
-        const type = (isType) ? thingId : null
-        const createResponse = await updateThing(newThingId, thingData, false, type, {}, parentId)
-        console.log(finalResponse)
-        console.log(thingId)
-        console.log(newThingId)
-        console.log(createResponse)
-        finalResponse = addMessageIfStatusIsNotCorrect(createResponse, finalResponse, createResponse.message)
-        console.log(finalResponse)
-
-        if (children != null && children != undefined && statusIsCorrect(createResponse.status)) {
-            Object.entries(children).forEach(async ([childId, num]) => {
-                for(var i = 1; i <= num; i++){
-                    console.log(childId)
-                    const response = await duplicateThingRecursive(childId, newThingId + "_" + getNameInThingId(childId) + "_" + i, null, newThingId, isType)
-                    finalResponse = addMessageIfStatusIsNotCorrect(response, finalResponse, response.message)
-                }
-            })
+    
+    //Si no tenemos los datos del thing los sacamos
+    if(thingData == null) {
+        var getThingResponse = await getThing(thingId, isType)
+        if (statusIsCorrect(getThingResponse.status)){
+            thingData = getThingResponse.message
+        } else {
+            return getThingResponse
         }
-        console.log("final final response")
-        console.log(finalResponse)
-        return finalResponse
-    } else {
-        console.log("GET_THING_RESPONSE")
-        console.log(getThingResponse)
-        return getThingResponse
     }
+
+    //Inicializamos respuesta
+    var finalResponse = Object.assign({}, SuccessfulResponse)
+    
+    //Cogemos los padres antes de modificar thingData y sacamos los hijos
+    const parents = getParentAttribute(thingData)
+    var children = await getAllChildrenOfThing(thingId, isType)
+    children = children.message
+
+    //Unimos data y preparamos los datos del thing para crearlo
+    if (data != null) thingData = merge(thingData, data)
+    thingData = removeRestrictedAttributesForThing(thingData)
+    if (thingData.hasOwnProperty("thingId")) delete thingData["thingId"]
+
+    //Si estamos creando a partir de tipo asignamos la variable correspondiente
+    const type = (isType) ? thingId : null
+
+    //Si es twin o es tipo pero es el gemelo principal simplemente lo creo y asocio
+    //Si no es el gemelo principal de los tipos creo tantos gemelos como valor tenga la key de parentId
+    const num = (isType && realParentId != null && parents.hasOwnProperty(realParentId)) ? parents[realParentId] : 1
+    for(var i = 0; i < num; i++){
+        // Si es el primero que no ponga _0
+        const newId = (i > 0) ? newThingId + '_' + i : newThingId
+        //Creo el gemelo
+        const createResponse = await updateThing(newId, thingData, false, type, parentId)
+        finalResponse = addMessageIfStatusIsNotCorrect(createResponse, finalResponse, createResponse.message)
+        
+        //Llamo a todos los hijos del gemelo para que se creen
+        if (children !== null && children !== undefined && children.length > 0) {
+            for (var child of children) {
+                var copyChild = {...child}
+                const response = await duplicateThingRecursive(copyChild.thingId, copyChild, newId + "_" + getNameInThingId(copyChild.thingId), null, newId, isType, thingId)
+                finalResponse = addMessageIfStatusIsNotCorrect(response, finalResponse, response.message)
+            }
+        }
+    }
+    
+    return finalResponse
 }
 
-const updateThingAndHisParent = async (thingId, childId, data, isType, type, children) => {
+const updateThingAndHisParent = async (thingId, childId, data, isType, type, numChild=1) => {
     var response = await executeGET(queryThingWithId(thingId, isType))
     if(statusIsCorrect(response.status)){
-        response = await updateThing(childId, data, isType, type, children, thingId)
+        response = await updateThing(childId, data, isType, type, thingId, numChild)
     } else {
         response.message = thingId + " " + response.message
     }
@@ -217,11 +245,13 @@ const deleteThingWithoutChildren = async (thingId, isType) => {
     const family = await getChildrenAndParent(thingId, isType)
 
     if (family.childrenList != null && family.childrenList != undefined) {
-        Object.keys(family.childrenList).forEach(async childrenId => {
-            finalResponse = removeParentOfThing(childrenId, thingId, isType, finalResponse)
+        family.childrenList.forEach(async children => {
+            const parent = getParentAttribute(children)
+            const full_remove = (isType && parent && Object.keys(parent).length === 1 && parent.hasOwnProperty(thingId)) ? true : false
+            finalResponse = removeParentOfThing(children.thingId, thingId, isType, finalResponse, full_remove)
         })
     }
-
+/*
     if (family.parentId != null) {
         if(!isType){
             finalResponse = removeThingFromChildrenList(thingId, family.parentId, isType, finalResponse)
@@ -230,7 +260,7 @@ const deleteThingWithoutChildren = async (thingId, isType) => {
                 finalResponse = removeThingFromChildrenList(thingId, parentId, isType, finalResponse)
             })
         }
-    }
+    }*/
 
     const responseDELETE = await executeDELETE(queryThingWithId(thingId, isType))
     finalResponse = addMessageIfStatusIsNotCorrect(responseDELETE, finalResponse, "ERROR deleting thing " + thingId + " - " + responseDELETE.message)
@@ -238,21 +268,21 @@ const deleteThingWithoutChildren = async (thingId, isType) => {
     return finalResponse
 }
 
-const deleteThingAndChildren = async (thingId, isType, parentId=null) => {
+const deleteThingAndChildren = async (thingId, isType) => {
     var finalResponse = Object.assign({}, SuccessfulResponse)
     const family = await getChildrenAndParent(thingId, isType)
 
     if (family.childrenList != null && family.childrenList != undefined) {
-        Object.keys(family.childrenList).forEach(async childrenId => {
-            const response = await deleteThingAndChildren(childrenId, isType, thingId)
+        family.childrenList.forEach(async children => {
+            const response = await deleteThingAndChildren(children.thingId, isType)
             finalResponse = addMessageIfStatusIsNotCorrect(response, finalResponse, response.message)
         })
     }
-
+/*
     if (family.parentId != null && (parentId == null || family.parentId == parentId)) {
         const responsePATCH = await executePATCH(querySpecificChildren(family.parentId, thingId), "null")
         finalResponse = addMessageIfStatusIsNotCorrect(responsePATCH, finalResponse, "Error when removing the thing from the list of children of " + family.parentId + "\n")
-    }
+    }*/
 
     const responseDELETE = await executeDELETE(queryThingWithId(thingId, isType))
     finalResponse = addMessageIfStatusIsNotCorrect(responseDELETE, finalResponse, "ERROR deleting thing " + thingId + "\n")
@@ -267,8 +297,18 @@ const deleteThingAndChildren = async (thingId, isType, parentId=null) => {
 
 const unlinkChildOfThing = async (parentId, childId, isType) => {
     var finalResponse = Object.assign({}, SuccessfulResponse)
-    responseRemoveChild = removeThingFromChildrenList(childId, parentId, isType, finalResponse)
-    responseRemoveParent = removeParentOfThing(childId, parentId, isType, finalResponse)
+    console.log("AA")
+    var full_remove = false
+    if (isType){
+        const responseParent = await getAllParentOfThing(childId, isType)
+        if (statusIsCorrect(responseParent.status)){
+            const parent = responseParent.message
+            full_remove = (parent && ((Object.keys(parent).length === 0) || (Object.keys(parent).length === 1 && parent.hasOwnProperty(parentId)))) ? true : false
+        } 
+    }
+
+    //responseRemoveChild = removeThingFromChildrenList(childId, parentId, isType, finalResponse)
+    responseRemoveParent = removeParentOfThing(childId, parentId, isType, finalResponse, full_remove)
     
     if(statusIsCorrect(finalResponse.status)) {
         return SuccessfulUnlinkResponse
@@ -283,8 +323,7 @@ const unlinkAllParentOfThing = async (thingId, isType) => {
     if(statusIsCorrect(getParent.status)) {
         parent = getParent.message
         if (parent != null) {
-            if(!isType){
-                console.log("parentId: " + parent)
+            if(!isType || Object.keys(parent).length === 0){
                 const responseUnlink = await unlinkChildOfThing(parent, thingId, isType)
                 finalResponse = addMessageIfStatusIsNotCorrect(responseUnlink, finalResponse, responseUnlink.message) 
             } else {
@@ -323,6 +362,7 @@ const unlinkAllChildrenOfThing = async (thingId, isType) => {
 // ---------------------------------------------
 module.exports = {
     getAllRootThings : getAllRootThings,
+    getAllThings : getAllThings,
     getThing : getThing,
     createThingWithoutSpecificId : createThingWithoutSpecificId,
     updateThing : updateThing,

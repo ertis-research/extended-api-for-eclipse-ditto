@@ -2,17 +2,16 @@
 // ------------------------------------------------------------------------
 const {
     getAllRootThings,
+    getAllThings,
     createThingWithoutSpecificId,
     getThing,
     updateThing,
     patchThing,
     deleteThingWithoutChildren,
-    deleteThingAndChildren,
     updateThingAndHisParent,
     getAllChildrenOfThing,
     getAllParentOfThing,
     unlinkAllParentOfThing,
-    unlinkAllChildrenOfThing,
     duplicateThing,
     unlinkChildOfThing
 } = require('../auxiliary/api_calls/dittoThing.js')
@@ -29,13 +28,20 @@ const typeController = {
     // /types
     //-------------------
     getRootTypes: async (req, res) => {
-        response = await getAllRootThings(isType)
+        const options = (req.query.hasOwnProperty("option")) ? req.query.option : ""
+        response = await getAllRootThings(isType, options)
+        res.status(response.status || 500).json(response.message)
+    },
+
+    getAllTypes: async (req, res) => {
+        const options = (req.query.hasOwnProperty("option")) ? req.query.option : ""
+        response = await getAllThings(isType, options)
         res.status(response.status || 500).json(response.message)
     },
 
     postType: async (req, res) => {
         const body = req.body
-        response = await createThingWithoutSpecificId(body, isType, null, {}, {})
+        response = await createThingWithoutSpecificId(body, isType, null, {})
         res.status(response.status || 500).json(response.message)
     },
 
@@ -52,7 +58,7 @@ const typeController = {
     putTypeById: async (req, res) => {
         const body = req.body
         const typeId = req.params.typeId
-        response = await updateThing(typeId, body, isType, null, {}, null)
+        response = await updateThing(typeId, body, isType, null)
         res.status(response.status || 500).json(response.message)
     },
 
@@ -80,14 +86,15 @@ const typeController = {
     },
 
     //-------------------
-    // /types/{typeId}/children/{childId}
+    // /types/{typeId}/children/{childId}/{numChild}
     //-------------------
 
     putChildrenOfType: async (req, res) => {
         const body = req.body
         const typeId = req.params.typeId
         const childId = req.params.childId
-        response = await updateThingAndHisParent(typeId, childId, body, isType, null, {})
+        const numChild = req.params.numChild
+        response = await updateThingAndHisParent(typeId, childId, body, isType, null, numChild)
         res.status(response.status || 500).json(response.message)
     },
 

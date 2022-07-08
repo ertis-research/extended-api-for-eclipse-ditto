@@ -5,6 +5,7 @@ const token = Buffer.from(`${process.env.DITTO_USERNAME}:${process.env.DITTO_PAS
 
 const executeRequestWithoutData = async (functionRequest, path = "") => {
     try {
+        console.log(path)
         const response = await functionRequest(
             process.env.DITTO_URI_THINGS + "/api/2" + path,
             {
@@ -19,9 +20,16 @@ const executeRequestWithoutData = async (functionRequest, path = "") => {
             message : response.data
         }
     } catch (err) {
-        return {
-            status : err.response.status || 500,
-            message : err.response.statusText
+        if (err != undefined && err.response != undefined) {
+            return {
+                status : err.response.status,
+                message : err.response.statusText
+            }
+        } else {
+            return {
+                status : 500,
+                message : "ERROR"
+            }
         }
     }    
 }
@@ -44,7 +52,7 @@ const executeRequestWithData = async (functionRequest, path = "", data = {}, con
             message : response.data
         }
     } catch (err) {
-        if (err.response != undefined) {
+        if (err != undefined && err.response != undefined) {
             return {
                 status : err.response.status,
                 message : err.response.statusText

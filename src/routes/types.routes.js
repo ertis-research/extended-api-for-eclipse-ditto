@@ -4,6 +4,8 @@ const TypeController = require('../controllers/type.controller.js')
 
 router.get("/", TypeController.getRootTypes)
 
+router.get("/all", TypeController.getAllTypes)
+
 router.post("/", TypeController.postType)
 
 // typeId
@@ -19,7 +21,7 @@ router.delete("/:typeId", TypeController.deleteTypeById)
 router.get("/:typeId/children", TypeController.getChildrenOfTypeById)
 
 // Children + childId
-router.put("/:typeId/children/:childId", TypeController.putChildrenOfType)
+router.put("/:typeId/children/:childId/:numChild", TypeController.putChildrenOfType)
 
 // Children + childId + unlink
 router.patch("/:typeId/children/:childId/unlink", TypeController.unlinkOneChildrenOfType)

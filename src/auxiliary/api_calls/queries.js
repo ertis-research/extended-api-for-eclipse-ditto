@@ -1,12 +1,21 @@
-const { attChildren, attParent, attIsType } = require('../attributes/consts')
+const { /*attChildren,*/ attParent, attIsType } = require('../attributes/consts')
 
-const queryRootThings = (isType) => {
+const queryRootThings = (isType, options="") => {
     if (isType) {
-        return "/search/things?filter=and(eq(attributes/" + attIsType + ",true),or(not(exists(attributes/" + attParent + ")),eq(attributes/" + attParent + ",null)))"
+        return "/search/things?filter=and(eq(attributes/" + attIsType + ",true),or(not(exists(attributes/" + attParent + ")),eq(attributes/" + attParent + ",null)))" + options 
     } else {
-        return "/search/things?filter=and(not(eq(attributes/" + attIsType + ",true)),or(not(exists(attributes/" + attParent + ")),eq(attributes/" + attParent + ",null)))"
+        return "/search/things?filter=and(not(eq(attributes/" + attIsType + ",true)),or(not(exists(attributes/" + attParent + ")),eq(attributes/" + attParent + ",null)))" + options
     }
 } 
+
+const queryAllThings = (isType, options="") => {
+    if (isType) {
+        return "/search/things?filter=eq(attributes/" + attIsType + ",true)" + options 
+    } else {
+        return "/search/things?filter=not(eq(attributes/" + attIsType + ",true))" + options
+    }
+} 
+
 const queryThings = "/things"
 
 const conditionIsType = (isType) => {
@@ -25,13 +34,20 @@ const queryParent = (thingId, isType) => {
     return queryAttributePath(thingId, attParent, isType)
 }
 
-const queryChildren = (thingId, isType) => {
-    return queryAttributePath(thingId, attChildren, isType) 
+const queryChildren = (thingId, isType, cursor=null) => {
+    textCursor = (cursor !== null) ? ",cursor(" + cursor + ")" : ""
+    if(isType){
+        return "/search/things?filter=exists(attributes/_parents/" + thingId + ")&option=size(200)" + textCursor
+    } else {
+        return "/search/things?filter=eq(attributes/_parents,'" + thingId + "')&option=size(200)" + textCursor
+    }
+    //return queryAttributePath(thingId, attChildren, isType) 
+    
 }
-
+/*
 const querySpecificChildren = (thingId, childrenId, isType) => {
     return queryAttributePath(thingId, attChildren + "/" + childrenId, isType)
-}
+}*/
 
 const querySpecificParent = (thingId, parentId) => {
     return queryAttributePath(thingId, attParent + "/" + parentId, true)
@@ -45,10 +61,11 @@ const queryListOfThings = (list) => {
 
 module.exports = {
     queryRootThings : queryRootThings,
+    queryAllThings : queryAllThings,
     queryThings : queryThings,
     queryParent : queryParent,
     queryChildren : queryChildren,
-    querySpecificChildren : querySpecificChildren,
+    //querySpecificChildren : querySpecificChildren,
     queryThingWithId : queryThingWithId,
     querySpecificParent : querySpecificParent
 }

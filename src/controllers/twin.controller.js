@@ -28,13 +28,15 @@ const twinController = {
     // /twins
     //-------------------
     getRootTwins: async (req, res) => {
-        response = await getAllRootThings(isType)
+        console.log(req.query)
+        const options = (req.query.hasOwnProperty("option")) ? req.query.option : ""
+        response = await getAllRootThings(isType, options)
         res.status(response.status || 500).json(response.message)
     },
 
     postTwin: async (req, res) => {
         const body = req.body
-        response = await createThingWithoutSpecificId(body, isType, null, {}, null)
+        response = await createThingWithoutSpecificId(body, isType, null, null)
         res.status(response.status || 500).json(response.message)
     },
 
@@ -51,7 +53,7 @@ const twinController = {
     putTwinById: async (req, res) => {
         const body = req.body
         const twinId = req.params.twinId
-        response = await updateThing(twinId, body, isType, null, {}, null)
+        response = await updateThing(twinId, body, isType, null)
         res.status(response.status || 500).json(response.message)
     },
 
@@ -92,7 +94,7 @@ const twinController = {
         const body = req.body
         const twinId = req.params.twinId
         const childId = req.params.childId
-        response = await updateThingAndHisParent(twinId, childId, body, isType, null, {})
+        response = await updateThingAndHisParent(twinId, childId, body, isType, null)
         res.status(response.status || 500).json(response.message)
     },
 

@@ -12,7 +12,7 @@ const policyController = {
                         entries : policy.s2.entries
                     }
                 )
-            }) 
+            })
 
             res.status(200).json(allPolicies)
         } catch (err) {
