@@ -4,7 +4,7 @@ const {
     privateAttributes, 
     restrictedAttributes, 
     attIsType, 
-    attChildren, 
+    //attChildren, 
     attParent,
     attType 
 } = require('./consts')
@@ -75,7 +75,7 @@ const removePrivateAttributesForListOfThings = (list) => {
     return res
 }
 
-const copyRestrictedAttributes = (from, to, isType_default, type_default, children_default, parent_default) => {
+const copyRestrictedAttributes = (from, to, isType_default, type_default, parent_default) => {
     //Copio los atriburtos restringidos de un thing a otro thing
     if (to == null || to == undefined) to = {}
     if (!to.hasOwnProperty("attributes")) to.attributes = {}
@@ -86,7 +86,7 @@ const copyRestrictedAttributes = (from, to, isType_default, type_default, childr
     
     if (!hasAttribute(to, attIsType)) to.attributes[attIsType] = isType_default
     if (!hasAttribute(to, attType))to.attributes[attType] = type_default
-    if (!hasAttribute(to, attChildren))to.attributes[attChildren] = children_default
+    //if (!hasAttribute(to, attChildren))to.attributes[attChildren] = children_default
     if (!hasAttribute(to, attParent))to.attributes[attParent] = parent_default
 
     return to
@@ -100,9 +100,9 @@ const restrictedAttributesToString = () => {
     return restrictedAttributes.join(', ')
 }
 
-const getChildrenOfThing = (thing) => {
+/*const getChildrenOfThing = (thing) => {
     return thing.attributes[attChildren]
-}
+}*/
 
 const getParentAttribute = (thing) => {
     return (thing.attributes.hasOwnProperty(attParent)) ? thing.attributes[attParent] : null
@@ -119,20 +119,21 @@ const setParent = (thing, parentId, isType) => {
     return thing
 }
 
-const isParent = (thing, parent, isType) => {
+const isParent = (thing, parent, isType, numChild=1) => {
     thing_parent = getParentAttribute(thing)
     if(isType){
-        return thing_parent !== undefined && thing_parent.hasOwnProperty(parent)
+        return thing_parent !== undefined && thing_parent.hasOwnProperty(parent) && thing_parent[parent] == numChild
     } else {
         return thing_parent !== undefined && thing_parent === parent
     }
     
 }
 
-const initAttributes = (thing, isType = false, type = null, children = {}, parent = null) => {
+const initAttributes = (thing, isType = false, type = null, parent = null) => {
+    if (!thing.hasOwnProperty("attributes")) thing.attributes = {}
     thing.attributes[attIsType] = isType
     if(type != null) thing.attributes[attType] = type
-    thing.attributes[attChildren] = children
+    //thing.attributes[attChildren] = children
     if(parent != null) thing.attributes[attParent] = parent
     return thing
 }
@@ -148,6 +149,6 @@ module.exports = {
     initAttributes : initAttributes,
     isParent : isParent,
     getParentAttribute : getParentAttribute,
-    getChildrenOfThing : getChildrenOfThing,
+    //getChildrenOfThing : getChildrenOfThing,
     setParent : setParent
 }

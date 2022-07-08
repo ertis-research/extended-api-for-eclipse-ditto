@@ -2,13 +2,13 @@
 const attType = "_type"
 const attIsType = "_isType"
 const attParent = "_parents"
-const attChildren = "_children"
+//const attChildren = "_children"
 const attName = "name"
 const attTextDescription = "text_description"
 const attImage = "image"
 
 const privateAttributes = [attIsType]
-const restrictedAttributes = [attChildren, attIsType, attParent, attType]
+const restrictedAttributes = [/*attChildren,*/attIsType, attParent, attType]
 const recommendedAttributes = [attName, attTextDescription, attImage]
 
 
@@ -17,7 +17,7 @@ module.exports = {
     restrictedAttributes : restrictedAttributes,
     recommendedAttributes : recommendedAttributes,
     attIsType : attIsType,
-    attChildren : attChildren,
+    //attChildren : attChildren,
     attParent : attParent,
     attType : attType
 }
