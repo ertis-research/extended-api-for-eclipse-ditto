@@ -9,6 +9,7 @@ const {
     patchThing,
     deleteThingWithoutChildren,
     updateThingAndHisParent,
+    getChildren,
     getAllChildrenOfThing,
     getAllParentOfThing,
     unlinkAllParentOfThing,
@@ -81,7 +82,8 @@ const typeController = {
 
     getChildrenOfTypeById: async (req, res) => {
         const typeId = req.params.typeId
-        response = await getAllChildrenOfThing(typeId, isType)
+        const options = (req.query.hasOwnProperty("option")) ? req.query.option : ""
+        response = (options == "") ? await getAllChildrenOfThing(typeId, isType) : await getChildren(typeId, isType, options)
         res.status(response.status || 500).json(response.message)
     },
 

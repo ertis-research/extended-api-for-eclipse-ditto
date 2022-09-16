@@ -97,5 +97,8 @@ router.patch("/:twinId/parent/unlink", TwinController.unlinkParentAndTwin)
 //Duplicate
 router.post("/:twinId/duplicate/:copyId", TwinController.duplicateTwin)
 
+//Duplicate keep hidden fields
+router.post("/:twinId/duplicate/:copyId/keepHiddenFields", TwinController.duplicateTwinKeepHiddenFields)
+
 
 module.exports = router

@@ -1,13 +1,15 @@
 const axios = require('axios').default
 
 
-const token = Buffer.from(`${process.env.DITTO_USERNAME}:${process.env.DITTO_PASSWORD}`, 'utf8').toString('base64')
+const tokenAPI = Buffer.from(`${process.env.DITTO_USERNAME_API}:${process.env.DITTO_PASSWORD_API}`, 'utf8').toString('base64')
+const tokenDevops = Buffer.from(`${process.env.DITTO_USERNAME_DEVOPS}:${process.env.DITTO_PASSWORD_DEVOPS}`, 'utf8').toString('base64')
 
-const executeRequestWithoutData = async (functionRequest, path = "") => {
+const pathAPI = "/api/2"
+
+const executeRequestWithoutData = async (functionRequest, token, path = "") => {
     try {
-        console.log(path)
         const response = await functionRequest(
-            process.env.DITTO_URI_THINGS + "/api/2" + path,
+            process.env.DITTO_URI_THINGS + path,
             {
                 headers : {
                     'Authorization' : `Basic ${token}`,
@@ -26,18 +28,19 @@ const executeRequestWithoutData = async (functionRequest, path = "") => {
                 message : err.response.statusText
             }
         } else {
+            console.log("ERROR: executeRequestWithoutData")
             return {
                 status : 500,
-                message : "ERROR"
+                message : "ERROR: executeRequestWithoutData"
             }
         }
     }    
 }
 
-const executeRequestWithData = async (functionRequest, path = "", data = {}, contentType = "application/json") => {
+const executeRequestWithData = async (functionRequest, token, path = "", data = {}, contentType = "application/json") => {
     try {
        const response = await functionRequest(
-            process.env.DITTO_URI_THINGS + "/api/2" + path,
+            process.env.DITTO_URI_THINGS + path,
             data,
             {
                 headers : {
@@ -58,9 +61,10 @@ const executeRequestWithData = async (functionRequest, path = "", data = {}, con
                 message : err.response.statusText
             }
         } else {
+            console.log("ERROR: executeRequestWithData")
             return {
                 status : 500,
-                message : "ERROR"
+                message : "ERROR: executeRequestWithData"
             }
         }
         
@@ -68,29 +72,37 @@ const executeRequestWithData = async (functionRequest, path = "", data = {}, con
 }
 
 const executePOST = async (path = "", data = {}) => {
-    return await executeRequestWithData(axios.post, path, data)
+    return await executeRequestWithData(axios.post, tokenAPI, pathAPI + path, data)
 }
 
 const executePUT = async (path = "", data = {}) => {
-    return await executeRequestWithData(axios.put, path, data)
+    return await executeRequestWithData(axios.put, tokenAPI, pathAPI + path, data)
 }
 
 const executePATCH = async (path = "", data = {}) => {
-    return await executeRequestWithData(axios.patch, path, data, "application/merge-patch+json")
+    return await executeRequestWithData(axios.patch, tokenAPI, pathAPI + path, data, "application/merge-patch+json")
 }
 
 const executeGET = async (path = "") => {
-    return await executeRequestWithoutData(axios.get, path)
+    return await executeRequestWithoutData(axios.get, tokenAPI, pathAPI + path)
 }
 
 const executeDELETE = async (path = "") => {
-    return await executeRequestWithoutData(axios.delete, path)
+    return await executeRequestWithoutData(axios.delete, tokenAPI, pathAPI + path)
 }
 
+const executePOST_DEVOPS = async (path = "", data = {}) => {
+    return await executeRequestWithData(axios.post, tokenDevops, path, data)
+}
+
+
+// EXPORT
+// ------------------------------------------------------------------------
 module.exports = {
     executePOST : executePOST,
     executePUT : executePUT,
     executePATCH : executePATCH,
     executeGET : executeGET,
-    executeDELETE : executeDELETE
+    executeDELETE : executeDELETE,
+    executePOST_DEVOPS : executePOST_DEVOPS
 }

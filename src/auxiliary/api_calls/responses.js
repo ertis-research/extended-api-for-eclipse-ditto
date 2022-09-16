@@ -44,10 +44,10 @@ const addMessageIfStatusIsNotCorrect = (response, finalResponse, message) => {
     return finalResponse
 }
 
-const modifyResponseList = (response) => {
+const modifyResponseList = (response, cursor=false) => {
     if (statusIsCorrect(response.status)) {
         items = removePrivateAttributesForListOfThings(response.message)
-        if (response.message.hasOwnProperty("cursor")){
+        if (response.message.hasOwnProperty("cursor") || cursor){
             response.message.items = items
         } else {
             response.message = items

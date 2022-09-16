@@ -6,7 +6,9 @@ const {
     attIsType, 
     //attChildren, 
     attParent,
-    attType 
+    attType, 
+    specificAttributes,
+    constantAttributes
 } = require('./consts')
 
 
@@ -54,7 +56,29 @@ const removeRestrictedAttributesForThing = (thing) => {
     return thing
 }
 
-function isIterable (value) {
+const removeSpecificAttributesForThing = (thing) => {
+    //Elimino los atributos privados en caso de que existan
+    specificAttributes.forEach((rAtt) => {
+        if(thing != null && thing.hasOwnProperty("attributes") && thing.attributes.hasOwnProperty(rAtt)){
+            delete thing.attributes[rAtt]
+        }
+    })
+
+    return thing
+}
+
+const removeHideAttributesForThing = (thing) => {
+    //Elimino los atributos ocultos en caso de que existan
+    if(thing != null && thing.hasOwnProperty("attributes")) {
+        Object.keys(thing.attributes).forEach((key) => {
+            if(key.startsWith("_") && !constantAttributes.includes(key)) delete thing.attributes[key]
+        })
+    }
+
+    return thing
+}
+
+const isIterable = (value) => {
     return Symbol.iterator in Object(value);
 }
 
@@ -98,6 +122,25 @@ const hasAttribute = (thing, attribute) => {
 
 const restrictedAttributesToString = () => {
     return restrictedAttributes.join(', ')
+}
+
+const setNullValueRecursive = (object) => {
+    if (['string', 'boolean', 'number'].includes(typeof object)){
+        return null
+    } else if (object instanceof Object && Object.keys(object).length > 0) {
+        Object.entries(object).forEach(([key, value]) => {
+            object[key] = setNullValueRecursive(value)
+        })
+    }
+    return object
+}
+
+const setNullValuesOfFeatures = (thing) => {
+    if (!thing.hasOwnProperty("features")) return thing
+    return {
+        ...thing,
+        features: setNullValueRecursive(thing.features)
+    }
 }
 
 /*const getChildrenOfThing = (thing) => {
@@ -144,11 +187,14 @@ module.exports = {
     removePrivateAttributesForThing : removePrivateAttributesForThing,
     removePrivateAttributesForListOfThings : removePrivateAttributesForListOfThings,
     removeRestrictedAttributesForThing : removeRestrictedAttributesForThing,
+    removeSpecificAttributesForThing : removeSpecificAttributesForThing,
+    removeHideAttributesForThing : removeHideAttributesForThing,
     copyRestrictedAttributes : copyRestrictedAttributes,
     restrictedAttributesToString : restrictedAttributesToString,
     initAttributes : initAttributes,
     isParent : isParent,
     getParentAttribute : getParentAttribute,
     //getChildrenOfThing : getChildrenOfThing,
-    setParent : setParent
+    setParent : setParent,
+    setNullValuesOfFeatures : setNullValuesOfFeatures
 }

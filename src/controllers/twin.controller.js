@@ -9,11 +9,13 @@ const {
     deleteThingWithoutChildren,
     deleteThingAndChildren,
     updateThingAndHisParent,
+    getChildren,
     getAllChildrenOfThing,
     getAllParentOfThing,
     unlinkAllParentOfThing,
     unlinkAllChildrenOfThing,
-    duplicateThing
+    duplicateThing,
+    duplicateThingKeepHide
 } = require('../auxiliary/api_calls/dittoThing.js')
 
 
@@ -28,7 +30,6 @@ const twinController = {
     // /twins
     //-------------------
     getRootTwins: async (req, res) => {
-        console.log(req.query)
         const options = (req.query.hasOwnProperty("option")) ? req.query.option : ""
         response = await getAllRootThings(isType, options)
         res.status(response.status || 500).json(response.message)
@@ -76,7 +77,8 @@ const twinController = {
 
     getChildrenOfTwinById: async (req, res) => {
         const twinId = req.params.twinId
-        response = await getAllChildrenOfThing(twinId, isType)
+        const options = (req.query.hasOwnProperty("option")) ? req.query.option : ""
+        response = (options == "") ? await getAllChildrenOfThing(twinId, isType) : await getChildren(twinId, isType, options)
         res.status(response.status || 500).json(response.message)
     },
 
@@ -137,6 +139,18 @@ const twinController = {
         const copyId = req.params.copyId
         const body = req.body
         response = await duplicateThing(twinId, copyId, body, isType)
+        res.status(response.status || 500).json(response.message)
+    },
+
+    //-------------------
+    // /twins/{twinId}/duplicate/{newId}/keepHiddenFields
+    //-------------------
+
+    duplicateTwinKeepHiddenFields: async (req, res) => {
+        const twinId = req.params.twinId
+        const copyId = req.params.copyId
+        const body = req.body
+        response = await duplicateThingKeepHide(twinId, copyId, body, isType)
         res.status(response.status || 500).json(response.message)
     }
 }
