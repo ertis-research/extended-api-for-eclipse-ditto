@@ -189,10 +189,10 @@ const duplicateThingKeepHide = async(thingId, newThingId, data, isType) => {
     return await duplicateThingRecursive(thingId, null, newThingId, data, null, isType, false)
 }
 
-const duplicateThingRecursive = async(thingId, thingData, newThingId, data, parentId, isType, realParentId=null, removeHide=true) => {  
+const duplicateThingRecursive = async(thingId, thingData, newThingId, dataToMerge, parentId, isType, realParentId=null, removeHide=true) => {  
     // Si data tiene atributos restringidos no se ejecuta la consulta
-    if(data != null && !checkForRestrictedAttributes(data)) return RestrictedAttributesResponse
-    
+    if(dataToMerge != null && !checkForRestrictedAttributes(dataToMerge)) return RestrictedAttributesResponse
+    var data = JSON.parse(JSON.stringify(dataToMerge));
     //Si no tenemos los datos del thing los sacamos
     if(thingData == null) {
         var getThingResponse = await getThing(thingId, isType)
@@ -236,7 +236,7 @@ const duplicateThingRecursive = async(thingId, thingData, newThingId, data, pare
             console.log("TIENE " + children.length + " HIJOS: " + thingId)
             for (var child of children) {
                 var copyChild = {...child}
-                const response = await duplicateThingRecursive(copyChild.thingId, copyChild, newId + ":" + getNameInThingId(copyChild.thingId), data, newId, isType, thingId, removeHide)
+                const response = await duplicateThingRecursive(copyChild.thingId, copyChild, newId + ":" + getNameInThingId(copyChild.thingId), dataToMerge, newId, isType, thingId, removeHide)
                 finalResponse = addMessageIfStatusIsNotCorrect(response, finalResponse, response.message)
             }
         }
