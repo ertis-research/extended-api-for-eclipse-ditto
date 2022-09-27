@@ -137,29 +137,30 @@ const createThingWithoutSpecificId = async (data, isType, type, parent) => {
     return modifyResponseThing(await executePOST(queryThings, data))
 }
 
-const updateThing = async (thingId, body, isType, type, parentId=null, numChild=1) => {
+//Esta funcion NO puede poner el padre a null
+const updateThing = async (thingId, body, isType, type, parentId=undefined, numChild=1) => {
     var finalResponse = Object.assign({}, SuccessfulResponse)
     
     const onlySetFamily = body == null || body == undefined || Object.keys(body).length === 0 //Si no hay body (hay que actualizar solo el padre)
-    const parentValue = (isType && parentId != null) ? {[parentId] : numChild} : parentId
 
     if(!onlySetFamily && !checkForRestrictedAttributes(body)) return RestrictedAttributesResponse
 
     const responseGet = await executeGET(queryThingWithId(thingId, isType))
     if (statusIsCorrect(responseGet.status)) { //Si ya existe
         body = copyRestrictedAttributes(responseGet.message, body, isType, type, undefined) //Copio los atributos restringido que ya tenía en el nuevo body
-        if(!isParent(body, parentId, isType, numChild)){ //Compruebo si el padre asignado y el nuevo son el mismo
+        if(parentId !== undefined && !isParent(body, parentId, isType, numChild)){ //Compruebo si el padre asignado y el nuevo son el mismo
             //actual_parent = getParentAttribute(body)
             //if(!isType && actual_parent != null) finalResponse = removeThingFromChildrenList(thingId, actual_parent, isType, finalResponse) //Si es un twin entonces elimino el thing de la lista de hijos del padre
             if(onlySetFamily){
                 finalResponse = setParentOfThing(thingId, parentId, isType, finalResponse, numChild)
             } else {
-                body = setParent(body, parentId, isType) //Seteo el padre para que se actualice con el PUT
+                body = setParent(body, parentId, isType, numChild) //Seteo el padre para que se actualice con el PUT
             }
             //finalResponse = addThingToChildrenList(thingId, parentId, isType, finalResponse) //Aniado el thingId a los hijos del padre
         }
 
     } else if(!onlySetFamily){ //Si no existe y hay body
+        const parentValue = (isType && parentId != undefined) ? {[parentId] : numChild} : parentId
         body = initAttributes(body, isType, type, parentValue) //Inicializo attributos restringidos
             //if(parentValue != null) finalResponse = addThingToChildrenList(thingId, parentId, isType, finalResponse)
     } else {

@@ -39,7 +39,7 @@ const executeRequestWithoutData = async (functionRequest, token, path = "") => {
 
 const executeRequestWithData = async (functionRequest, token, path = "", data = {}, contentType = "application/json") => {
     try {
-       const response = await functionRequest(
+        const response = await functionRequest(
             process.env.DITTO_URI_THINGS + path,
             data,
             {

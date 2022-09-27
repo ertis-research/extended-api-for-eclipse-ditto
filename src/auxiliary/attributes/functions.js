@@ -109,7 +109,7 @@ const copyRestrictedAttributes = (from, to, isType_default, type_default, parent
     })
     
     if (!hasAttribute(to, attIsType)) to.attributes[attIsType] = isType_default
-    if (!hasAttribute(to, attType))to.attributes[attType] = type_default
+    //if (!hasAttribute(to, attType))to.attributes[attType] = type_default
     //if (!hasAttribute(to, attChildren))to.attributes[attChildren] = children_default
     if (!hasAttribute(to, attParent))to.attributes[attParent] = parent_default
 
@@ -151,19 +151,20 @@ const getParentAttribute = (thing) => {
     return (thing.attributes.hasOwnProperty(attParent)) ? thing.attributes[attParent] : null
 }
 
-const setParent = (thing, parentId, isType) => {
+const setParent = (thing, parentId, isType, numChild=1) => {
     if(!isType){
         thing.attributes[attParent] = parentId
     } else {
         parents = thing.attributes[attParent]
         if (parents == null || parents == undefined) parents = {}
-        thing.attributes[attParent] = {...parents, [parentId] : 1}
+        thing.attributes[attParent] = {...parents, [parentId] : numChild}
     }
     return thing
 }
 
 const isParent = (thing, parent, isType, numChild=1) => {
     thing_parent = getParentAttribute(thing)
+    if(thing_parent == undefined && parent == undefined) return true
     if(isType){
         return thing_parent !== undefined && thing_parent.hasOwnProperty(parent) && thing_parent[parent] == numChild
     } else {

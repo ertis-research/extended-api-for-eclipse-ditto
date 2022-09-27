@@ -95,9 +95,13 @@ const typeController = {
         const body = req.body
         const typeId = req.params.typeId
         const childId = req.params.childId
-        const numChild = req.params.numChild
-        response = await updateThingAndHisParent(typeId, childId, body, isType, null, numChild)
-        res.status(response.status || 500).json(response.message)
+        const numChild = parseInt(req.params.numChild)
+        if (isNaN(numChild)) {
+            res.status(400).statusMessage("The number of children must be indicated by digits.")
+        } else {
+            response = await updateThingAndHisParent(typeId, childId, body, isType, null, numChild)
+            res.status(response.status || 500).json(response.message)
+        }
     },
 
     //-------------------
