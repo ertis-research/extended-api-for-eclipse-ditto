@@ -75,6 +75,10 @@ const executePOST = async (path = "", data = {}) => {
     return await executeRequestWithData(axios.post, tokenAPI, pathAPI + path, data)
 }
 
+const executePOSTTextPlain = async (path = "", data) => {
+    return await executeRequestWithData(axios.post, tokenAPI, pathAPI + path, data, contentType="text/plain")
+}
+
 const executePUT = async (path = "", data = {}) => {
     return await executeRequestWithData(axios.put, tokenAPI, pathAPI + path, data)
 }
@@ -94,12 +98,11 @@ const executeDELETE = async (path = "") => {
 const executePOST_DEVOPS = async (path = "", data = {}) => {
     return await executeRequestWithData(axios.post, tokenDevops, path, data)
 }
-
-
 // EXPORT
 // ------------------------------------------------------------------------
 module.exports = {
     executePOST : executePOST,
+    executePOSTTextPlain : executePOSTTextPlain,
     executePUT : executePUT,
     executePATCH : executePATCH,
     executeGET : executeGET,
