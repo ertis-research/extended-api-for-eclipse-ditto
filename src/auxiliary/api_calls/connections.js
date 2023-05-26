@@ -39,7 +39,10 @@ const getAllConnectionId = async () => {
     if(response !== undefined && response['status'] == 200){
         return {
             status: 200,
-            message: (response.message.map((connection) => {return connection['id']}))
+            message: (response.message.map((connection) => {return {
+                                                                        'id': connection['id'],
+                                                                        'name': connection['name']
+                                                                    }}))
         }
     }else
     return response
