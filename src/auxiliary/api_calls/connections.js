@@ -3,7 +3,8 @@
 const { 
     executePOST_DEVOPS,
     executeGET,
-    executePOSTTextPlain
+    executePOSTTextPlain,
+    executeDELETE
 } = require('./requests_for_ditto')
 
 const { 
@@ -62,6 +63,11 @@ const openConnection = async (connectionId) => {
     return response
 }
 
+const deleteConnection = async (connectionId) => {
+    var response = await executeDELETE("/connections/"+connectionId)
+    return response
+}
+
 // EXPORT
 // ------------------------------------------------------------------------
 module.exports = {
@@ -69,5 +75,6 @@ module.exports = {
     getAllConnectionId : getAllConnectionId,
     getConnectionById : getConnectionById,
     closeConnection : closeConnection,
-    openConnection : openConnection
+    openConnection : openConnection,
+    deleteConnection : deleteConnection
 }

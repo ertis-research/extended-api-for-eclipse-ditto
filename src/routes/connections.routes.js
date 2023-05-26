@@ -14,4 +14,6 @@ router.put("/:connectionId/open", ConnectionsController.openConnection)
 
 router.put("/:connectionId/close", ConnectionsController.closeConnection)
 
+router.put("/:connectionId/delete", ConnectionsController.deleteConnection)
+
 module.exports = router

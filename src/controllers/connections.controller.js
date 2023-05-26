@@ -5,7 +5,8 @@ const {
     getAllConnectionId,
     getConnectionById,
     openConnection,
-    closeConnection
+    closeConnection,
+    deleteConnection
 } = require('../auxiliary/api_calls/connections.js')
 
 
@@ -30,6 +31,10 @@ const ConnectionsController = {
     },
     closeConnection : async (req, res) => {
         response = await closeConnection(req.params.connectionId)
+        res.status(response.status || 500).json(response.message)
+    },
+    deleteConnection : async (req, res) => {
+        response = await deleteConnection(req.params.connectionId)
         res.status(response.status || 500).json(response.message)
     }
 }
