@@ -1,0 +1,17 @@
+{
+    "entryFile": "src/app.ts",
+    "noImplicitAdditionalProperties": "throw-on-extras",
+    "controllerPathGlobs": [
+        "src/controllers/connection.controller.ts",
+        "src/controllers/policy.controller.ts",
+        "src/controllers/twin.controller.ts",
+        "src/controllers/type.controller.ts"
+    ],
+    "spec": {
+      "outputDirectory": "build",
+      "specVersion": 3
+    },
+    "routes": {
+      "routesDir": "build"
+    }
+  }
