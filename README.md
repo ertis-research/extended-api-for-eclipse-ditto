@@ -1,1 +1,1 @@
-# extended-api-for-eclipse-ditto
+# Extended Api for Eclipse Ditto

@@ -4,7 +4,7 @@
 */
 
 import { Request, Response } from "express"
-import { createThingWithoutSpecificId, deleteThingAndChildren, deleteThingWithoutChildren, duplicateThing, getAllChildrenOfThing, getAllParentOfThing, getAllRootThings, getChildren, getThing, patchThing, unlinkAllChildrenOfThing, unlinkAllParentOfThing, updateThing, updateThingAndHisParent } from "../auxiliary/api_calls/dittoThing"
+import { createThingWithoutSpecificId, deleteThingAndChildren, deleteThingWithoutChildren, duplicateThing, getAllChildrenOfThing, getAllParentOfThing, getAllRootThings, getChildren, getThing, patchThing, unlinkAllChildrenOfThing, unlinkAllParentOfThing, updateThing } from "../auxiliary/api_calls/dittoThing"
 
 
 
@@ -19,6 +19,8 @@ export const twinController = {
     //-------------------
     getRootTwins: async (req: Request, res: Response) => {
         // #swagger.tags = ['Twins']
+        console.log("GET root twins - " + req)
+
         const options: string = (req.query.hasOwnProperty("option")) ? req.query.option as string : ""
         let response = await getAllRootThings(isType, options)
         res.status(response.status || 500).json(response.message)
@@ -26,6 +28,8 @@ export const twinController = {
 
     postTwin: async (req: Request, res: Response) => {
         // #swagger.tags = ['Twins']
+        console.log("POST twin - " + req)
+
         const body = req.body
         let response = await createThingWithoutSpecificId(body, isType)
         res.status(response.status || 500).json(response.message)
@@ -37,12 +41,16 @@ export const twinController = {
 
     getTwinById: async (req: Request, res: Response) => { 
         // #swagger.tags = ['Twins']
+        console.log("GET twin - " + req)
+
         let response = await getThing(req.params.twinId, isType)
         res.status(response.status || 500).json(response.message)
     },
 
     putTwinById: async (req: Request, res: Response) => {
         // #swagger.tags = ['Twins']
+        console.log("PUT twin - " + req)
+
         let response = await updateThing(req.params.twinId, isType, req.body)
         res.status(response.status || 500).json(response.message)
     },
@@ -90,7 +98,7 @@ export const twinController = {
         const body = req.body
         const twinId = req.params.twinId
         const childId = req.params.childId
-        let response = await updateThingAndHisParent(twinId, isType, childId, body)
+        let response = await updateThing(childId, isType, body, undefined, twinId)
         res.status(response.status || 500).json(response.message)
     },
 

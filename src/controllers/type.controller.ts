@@ -4,7 +4,7 @@
 */
 
 import { Request, Response } from "express"
-import { createThingWithoutSpecificId, deleteThingWithoutChildren, duplicateThing, getAllChildrenOfThing, getAllParentOfThing, getAllRootThings, getAllThings, getChildren, getThing, patchThing, unlinkAllChildrenOfThing, unlinkAllParentOfThing, unlinkChildOfThing, updateThing, updateThingAndHisParent } from "../auxiliary/api_calls/dittoThing"
+import { createThingWithoutSpecificId, deleteThingWithoutChildren, duplicateThing, getAllChildrenOfThing, getAllParentOfThing, getAllRootThings, getAllThings, getChildren, getThing, patchThing, unlinkAllChildrenOfThing, unlinkAllParentOfThing, unlinkChildOfThing, updateThing } from "../auxiliary/api_calls/dittoThing"
 
 
 
@@ -97,7 +97,7 @@ export const typeController = {
         if (isNaN(numChild)) {
             res.status(400).json("The number of children must be indicated by digits.")
         } else {
-            const response = await updateThingAndHisParent(typeId,  isType, childId, body, numChild)
+            const response = await updateThing(childId, isType, body, undefined, typeId, numChild)
             res.status(response.status || 500).json(response.message)
         }
     },

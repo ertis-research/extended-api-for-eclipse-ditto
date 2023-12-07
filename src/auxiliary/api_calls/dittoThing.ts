@@ -219,11 +219,11 @@ const setParentOfThing = async (thingId: string, isType: boolean, parentId: stri
  */
 export const updateThing = async (thingId: string, isType: boolean, body?: DittoThing, type?: string, newParentId?: string, numChild: number = 1): Promise<RequestResponse> => {
     let finalResponse = Object.assign({}, SuccessfulResponse)
+    const response = await executeGET(queryThingWithId(thingId, isType))
 
     if (body && Object.keys(body).length > 0) {
         if (hasRestrictedAttributes(body)) return RestrictedAttributesResponse
         let thing: DittoThing = {}
-        const response = await executeGET(queryThingWithId(thingId, isType))
         if (statusIsCorrect(response.status)) {
             // Set the new data of the thing, keeping the restricted attributes it had
             thing = copyRestrictedAttributes(response.message, body)
@@ -240,7 +240,7 @@ export const updateThing = async (thingId: string, isType: boolean, body?: Ditto
         let responsePut = await executePUT(queryThingWithId(thingId, isType), thing)
         return modifyResponseThing(responsePut)
 
-    } else if (newParentId) {
+    } else if (newParentId && statusIsCorrect(response.status)) {
         return setParentOfThing(thingId, isType, newParentId, finalResponse, numChild)
     }
 
@@ -260,7 +260,7 @@ export const updateThing = async (thingId: string, isType: boolean, body?: Ditto
  * @param numChild 
  * @returns 
  */
-export const updateThingAndHisParent = async (thingId: string, isType: boolean, childId: string, body?: DittoThing, numChild: number = 1): Promise<RequestResponse> => {
+const updateThingAndHisParent = async (thingId: string, isType: boolean, childId: string, body?: DittoThing, numChild: number = 1): Promise<RequestResponse> => {
     const checkParent = await checkThingExists(thingId, isType)
     if (checkParent) {
         return await updateThing(childId, isType, body, undefined, thingId, numChild)
@@ -283,6 +283,12 @@ export const updateThingAndHisParent = async (thingId: string, isType: boolean, 
 export const patchThing = async (thingId: string, body: DittoThing, isType: boolean): Promise<RequestResponse> => {
     if (hasRestrictedAttributes(body)) return RestrictedAttributesResponse
     if (body.attributes == null) return AllAttributesCannotBeRemovedResponse
+    const check = await checkThingExists(thingId, isType)
+    if (typeof check !== "boolean") {
+        return check
+    } else if (check === false){
+        body = initAttributes(body, isType)
+    }
     return modifyResponseThing(await executePATCH(queryThingWithId(thingId, isType), body))
 }
 
