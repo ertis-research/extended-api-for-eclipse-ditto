@@ -1,3 +1,5 @@
 .env
 Dockerfile
 .vscode
+node_modules
+jest-env.js

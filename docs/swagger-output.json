@@ -1,0 +1,769 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "Extended API for Eclipse Ditto",
+    "description": "Extended API for Eclipse Ditto",
+    "version": "1.0.0"
+  },
+  "host": "localhost:3001",
+  "basePath": "/",
+  "schemes": [
+    "http"
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/api/twins/": {
+      "get": {
+        "tags": [
+          "Twins"
+        ],
+        "description": "",
+        "parameters": [
+          {
+            "name": "option",
+            "in": "query",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Twins"
+        ],
+        "description": "",
+        "responses": {
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/twins/fix": {
+      "put": {
+        "tags": [
+          "Twins"
+        ],
+        "description": "",
+        "responses": {
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/twins/{twinId}": {
+      "get": {
+        "tags": [
+          "Twins"
+        ],
+        "description": "",
+        "parameters": [
+          {
+            "name": "twinId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Twins"
+        ],
+        "description": "",
+        "parameters": [
+          {
+            "name": "twinId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Twins"
+        ],
+        "description": "",
+        "parameters": [
+          {
+            "name": "twinId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Twins"
+        ],
+        "description": "",
+        "parameters": [
+          {
+            "name": "twinId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/twins/{twinId}/children": {
+      "get": {
+        "tags": [
+          "Twins"
+        ],
+        "description": "",
+        "parameters": [
+          {
+            "name": "twinId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "option",
+            "in": "query",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Twins"
+        ],
+        "description": "",
+        "parameters": [
+          {
+            "name": "twinId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/twins/{twinId}/children/{childId}": {
+      "put": {
+        "tags": [
+          "Twins"
+        ],
+        "description": "",
+        "parameters": [
+          {
+            "name": "twinId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "childId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/twins/{twinId}/children/unlink": {
+      "patch": {
+        "tags": [
+          "Twins"
+        ],
+        "description": "",
+        "parameters": [
+          {
+            "name": "twinId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/twins/{twinId}/parent": {
+      "get": {
+        "tags": [
+          "Twins"
+        ],
+        "description": "",
+        "parameters": [
+          {
+            "name": "twinId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/twins/{twinId}/parent/unlink": {
+      "patch": {
+        "tags": [
+          "Twins"
+        ],
+        "description": "",
+        "parameters": [
+          {
+            "name": "twinId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/twins/{twinId}/duplicate/{copyId}": {
+      "post": {
+        "tags": [
+          "Twins"
+        ],
+        "description": "",
+        "parameters": [
+          {
+            "name": "twinId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "copyId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/types/": {
+      "get": {
+        "tags": [
+          "Types"
+        ],
+        "description": "",
+        "parameters": [
+          {
+            "name": "option",
+            "in": "query",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Types"
+        ],
+        "description": "",
+        "responses": {
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/types/all": {
+      "get": {
+        "tags": [
+          "Types"
+        ],
+        "description": "",
+        "parameters": [
+          {
+            "name": "option",
+            "in": "query",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/types/fix": {
+      "put": {
+        "tags": [
+          "Types"
+        ],
+        "description": "",
+        "responses": {
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/types/{typeId}": {
+      "get": {
+        "tags": [
+          "Types"
+        ],
+        "description": "",
+        "parameters": [
+          {
+            "name": "typeId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Types"
+        ],
+        "description": "",
+        "parameters": [
+          {
+            "name": "typeId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Types"
+        ],
+        "description": "",
+        "parameters": [
+          {
+            "name": "typeId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Types"
+        ],
+        "description": "",
+        "parameters": [
+          {
+            "name": "typeId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/types/{typeId}/children": {
+      "get": {
+        "tags": [
+          "Types"
+        ],
+        "description": "",
+        "parameters": [
+          {
+            "name": "typeId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "option",
+            "in": "query",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/types/{typeId}/children/{childId}/{numChild}": {
+      "put": {
+        "tags": [
+          "Types"
+        ],
+        "description": "",
+        "parameters": [
+          {
+            "name": "typeId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "childId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "numChild",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad Request"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/types/{typeId}/children/{childId}/unlink": {
+      "patch": {
+        "tags": [
+          "Types"
+        ],
+        "description": "",
+        "parameters": [
+          {
+            "name": "typeId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "childId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/types/{typeId}/children/unlink": {
+      "patch": {
+        "tags": [
+          "Types"
+        ],
+        "description": "",
+        "parameters": [
+          {
+            "name": "typeId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/types/{typeId}/parent": {
+      "get": {
+        "tags": [
+          "Types"
+        ],
+        "description": "",
+        "parameters": [
+          {
+            "name": "typeId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/types/{typeId}/parent/unlink": {
+      "patch": {
+        "tags": [
+          "Types"
+        ],
+        "description": "",
+        "parameters": [
+          {
+            "name": "typeId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/types/{typeId}/create/{twinId}": {
+      "post": {
+        "tags": [
+          "Types"
+        ],
+        "description": "",
+        "parameters": [
+          {
+            "name": "typeId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "twinId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/connections/": {
+      "post": {
+        "tags": [
+          "Connections"
+        ],
+        "description": "",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "example": "any"
+                },
+                "message": {
+                  "example": "any"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/connections/ids": {
+      "get": {
+        "tags": [
+          "Connections"
+        ],
+        "description": "",
+        "responses": {
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/connections/{connectionId}": {
+      "get": {
+        "tags": [
+          "Connections"
+        ],
+        "description": "",
+        "parameters": [
+          {
+            "name": "connectionId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/connections/{connectionId}/open": {
+      "put": {
+        "tags": [
+          "Connections"
+        ],
+        "description": "",
+        "parameters": [
+          {
+            "name": "connectionId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/connections/{connectionId}/close": {
+      "put": {
+        "tags": [
+          "Connections"
+        ],
+        "description": "",
+        "parameters": [
+          {
+            "name": "connectionId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/connections/{connectionId}/delete": {
+      "put": {
+        "tags": [
+          "Connections"
+        ],
+        "description": "",
+        "parameters": [
+          {
+            "name": "connectionId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/policies/": {
+      "get": {
+        "tags": [
+          "Policies"
+        ],
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request"
+          }
+        }
+      }
+    }
+  }
+}
