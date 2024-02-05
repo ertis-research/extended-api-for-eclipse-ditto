@@ -23,6 +23,17 @@ export const isIterable = (value: DittoThing) => {
 
 
 /**
+ * Checks if two arrays have the same elements regardless of order
+ * @param a Array to compare
+ * @param b Array to compare
+ * @returns True if equal, False if not
+ */
+export const arraysAreEquals = (a: any[], b: any[]) => {
+    return JSON.stringify(a.sort()) === JSON.stringify(b.sort())
+}
+
+
+/**
  * Checks if a thing has a certain attribute
  * @param thing Thing entity scheme
  * @param attribute Attribute to be checked 
@@ -89,7 +100,7 @@ export const sameParent = (thing: DittoThing, parentId: string, isType: boolean,
  * @returns Value in the parent attribute of the thing or undefined
  */
 export const getParentAttribute = (thing: DittoThing): string | TypeParentAttribute => {
-    return (thing.attributes && thing.attributes.hasOwnProperty(attParent)) ? {...thing.attributes[attParent]} : undefined
+    return (thing.attributes && thing.attributes.hasOwnProperty(attParent)) ? { ...thing.attributes[attParent] } : undefined
 }
 
 
@@ -103,17 +114,16 @@ export const getParentAttribute = (thing: DittoThing): string | TypeParentAttrib
  * Initializes special attributes to manage composition and types.
  * @param thing Thing entity scheme
  * @param isType Determines whether the thing is a type (true) or a twin (false)
- * @param type If it is a twin created from a type, it would indicate the identifier of that type.
  * @param parent If the thing is part of a composite thing, the identifiers of its parents are indicated. A type may have more than one parent, while a twin may have only one.
  * @param numChild In case it is a type, how many instances of the type are indicated by the parent given in the parameter to be created
  * @returns The scheme of the thing with the initialized special attributes
  */
-export const initAttributes = (thing: DittoThing, isType: boolean = false, type?: string, parent?: string, numChild: number = 1): DittoThing => {
+export const initAttributes = (thing: DittoThing, isType: boolean = false, parent?: string, numChild: number = 1): DittoThing => {
     if (!thing.attributes) thing.attributes = {}
 
     thing.attributes[attIsType] = isType
-    if (type) thing.attributes[attType] = type
-    if (parent) thing.attributes[attParent] = (isType) ? {[parent] : numChild} : parent
+    //if (type) thing.attributes[attType] = type
+    if (parent) thing.attributes[attParent] = (isType) ? { [parent]: numChild } : parent
 
     return thing
 }
@@ -150,6 +160,7 @@ export const setParent = (thing: DittoThing, parentId: string, isType: boolean, 
 export const copyRestrictedAttributes = (from: DittoThing, to: DittoThing) => {
     if (from.attributes) {
         const fromAttributesEntries = Object.entries(from.attributes).filter(([key, value]) => restrictedAttributes.includes(key))
+        if (!to.attributes) to.attributes = {}
         to.attributes = {
             ...to.attributes,
             ...Object.fromEntries(fromAttributesEntries)
@@ -261,6 +272,7 @@ export const removePrivateAttributesForListOfThings = (obj: any) => {
 
     var res = []
     if (obj && isIterable(obj)) {
+        console.log("[Remove private attributes for list] Iterating the things received...")
         res = obj.map((thing: DittoThing) => {
             return removePrivateAttributesForThing(thing)
         })

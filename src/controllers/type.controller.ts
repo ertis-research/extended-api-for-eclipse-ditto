@@ -4,7 +4,7 @@
 */
 
 import { Request, Response } from "express"
-import { createThingWithoutSpecificId, deleteThingWithoutChildren, duplicateThing, getAllChildrenOfThing, getAllParentOfThing, getAllRootThings, getAllThings, getChildren, getThing, patchThing, unlinkAllChildrenOfThing, unlinkAllParentOfThing, unlinkChildOfThing, updateThing } from "../auxiliary/api_calls/dittoThing"
+import { createThingWithoutSpecificId, deleteThingWithoutChildren, duplicateThing, fixCompositionality, getAllChildrenOfThing, getAllParentOfThing, getAllRootThings, getAllThings, getChildren, getThing, patchThing, unlinkAllChildrenOfThing, unlinkAllParentOfThing, unlinkChildOfThing, updateThing } from "../auxiliary/api_calls/dittoThing"
 
 
 
@@ -17,6 +17,7 @@ export const typeController = {
     //-------------------
     // /types
     //-------------------
+
     getRootTypes: async (req: Request, res: Response) => {
         // #swagger.tags = ['Types']
         const options: string = (req.query.hasOwnProperty("option")) ? req.query.option as string : ""
@@ -35,6 +36,18 @@ export const typeController = {
         // #swagger.tags = ['Types']
         const body = req.body
         const response = await createThingWithoutSpecificId(body, isType)
+        res.status(response.status || 500).json(response.message)
+    },
+
+
+    //-------------------
+    // /fix
+    //-------------------
+    fix: async (req: Request, res: Response) => {
+        // #swagger.tags = ['Types']
+        console.log("PUT fix types - " + req)
+
+        let response = await fixCompositionality(isType)
         res.status(response.status || 500).json(response.message)
     },
 
@@ -97,7 +110,7 @@ export const typeController = {
         if (isNaN(numChild)) {
             res.status(400).json("The number of children must be indicated by digits.")
         } else {
-            const response = await updateThing(childId, isType, body, undefined, typeId, numChild)
+            const response = await updateThing(childId, isType, body, typeId, numChild)
             res.status(response.status || 500).json(response.message)
         }
     },
@@ -157,5 +170,8 @@ export const typeController = {
         const body = req.body
         const response = await duplicateThing(typeId, isType, twinId, body)
         res.status(response.status || 500).json(response.message)
-    }
+    },
+
+
+
 }

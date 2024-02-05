@@ -2,9 +2,11 @@ import Router from 'express-promise-router'
 import { typeController } from '../controllers/type.controller'
 
 export const router = Router()
+
 router.get("/", typeController.getRootTypes)
-router.get("/all", typeController.getAllTypes)
 router.post("/", typeController.postType)
+router.get("/all", typeController.getAllTypes)
+router.put("/fix", typeController.fix)
 
 // typeId
 router.get("/:typeId", typeController.getTypeById)
@@ -32,3 +34,5 @@ router.patch("/:typeId/parent/unlink", typeController.unlinkAllParentsOfType)
 
 //Create twin
 router.post("/:typeId/create/:twinId", typeController.createTwinFromType)
+
+

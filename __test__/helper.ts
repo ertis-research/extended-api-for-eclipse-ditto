@@ -16,6 +16,22 @@ export const deleteThing = (thingId:string) => {
     return axios.delete(ditto + "/api/2/things/" + thingId, { headers: { Authorization: `Basic ${tokenAPI}`, 'Content-Type': 'application/json; charset=utf-8', 'Accept': 'application/json'}})
 }
 
+export const checkError = (e: any, status: number, data?: any) => {
+    if(axios.isAxiosError(e) && e.response) {
+        expect(e.response.status).toBe(status)
+        if (data) expect(e.response.data).toStrictEqual(data)
+    } else {
+        throw e
+    }
+}
+
+export const checkData = async (thingId: string, data: any) => {
+    let check = await getThingData(thingId)
+    expect(check).toBeTruthy()
+    if (!data.hasOwnProperty("thingId")) data = { thingId: thingId, ...data }
+    expect(check.data).toStrictEqual(data)
+}
+
 export const attributes_data = {
     name: "Automatic test from extended api"
 }

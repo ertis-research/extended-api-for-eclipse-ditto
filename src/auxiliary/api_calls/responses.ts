@@ -19,10 +19,12 @@ export const RestrictedAttributesResponse = {
     message: "In the definition there is a restricted attribute, these cannot be created or updated.\nRestricted attributes: " + restrictedAttributesToString
 }
 
+/*
 export const AllAttributesCannotBeRemovedResponse = {
     status: 442,
     message: "Not all attributes can be removed due to restricted attributes.: " + restrictedAttributesToString
 }
+*/
 
 export const SuccessfulResponse = {
     status: 200,
@@ -40,8 +42,23 @@ export const BodyCannotBeEmptyResponse = {
 }
 
 export const ThingDoesNotExistResponse = {
-    status: 400,
+    status: 404,
     message: "The thing with the provided identifier does not exist in Eclipse Ditto."
+}
+
+export const ThingExistResponse = {
+    status: 400,
+    message: "The thing with the provided identifier already exist in Eclipse Ditto."
+}
+
+export const ThingDoesNotExistOrIncorrectIsTypeResponse = {
+    status: 412,
+    message: "The thing with the provided identifier does not correspond to the entity (type/twin) of the request or the thing does not exist."
+}
+
+export const ParentIsWrongEntityResponse = {
+    status: 412,
+    message: "The parent received with the provided identifier does not correspond to the entity (type/twin) of the request or the thing does not exist."
 }
 
 export const NoDeletionChildrenInTypes = {
@@ -74,6 +91,17 @@ export const statusIsCorrect = (status: number) => {
 
 
 /**
+ * Extra items from the response received by Eclipse Ditto
+ * @param res Response to be dealt with
+ * @returns Items included in the response
+ */
+export const getItems = (res:RequestResponse) => {
+    if(!statusIsCorrect(res.status)) return res
+    return (res.message.hasOwnProperty("items")) ? res.message.items : res.message
+}
+
+
+/**
  * Receive a response and check if it is correct. 
  * If not, it sets the status of the final response to the new one and adds the message sent by parameter. 
  * If it is correct, it returns the final response without modifying it.
@@ -99,13 +127,16 @@ export const addMessageIfStatusIsNotCorrect = (response: RequestResponse, finalR
  * @returns Response modified by removing private attributes from all items in list
  */
 export const modifyResponseList = (response: RequestResponse, cursor: boolean = false) => {
+    console.log("[Modify response list] Dealing with the response...")
     if (statusIsCorrect(response.status)) {
+        console.log("[Modify response list] Removing private attributes...")
         let items = removePrivateAttributesForListOfThings(response.message)
         if (response.message.hasOwnProperty("cursor") || cursor) {
             response.message.items = items
         } else {
             response.message = items
         }
+        console.log("[Modify response list] Successfully modified response")
     }
     return response
 }

@@ -10,10 +10,22 @@ export const queryThings = "/things"
 
 export const queryRootThings = (isType: boolean, options: string = "") => {
     if (isType) {
-        return "/search/things?filter=and(eq(attributes/" + attIsType + ",true),or(not(exists(attributes/" + attParent + ")),eq(attributes/" + attParent + ",null)))" + options
+        return "/search/things?filter=and(eq(attributes/" + attIsType + ",true),or(not(exists(attributes/" + attParent + ")),eq(attributes/" + attParent + ",null)))&option=size(200)" + options
     } else {
-        return "/search/things?filter=and(not(eq(attributes/" + attIsType + ",true)),or(not(exists(attributes/" + attParent + ")),eq(attributes/" + attParent + ",null)))" + options
+        return "/search/things?filter=and(not(eq(attributes/" + attIsType + ",true)),or(not(exists(attributes/" + attParent + ")),eq(attributes/" + attParent + ",null)))&option=size(200)" + options
     }
+}
+
+export const queryChildThings = (isType: boolean, options: string = "") => {
+    if (isType) {
+        return "/search/things?filter=and(" + checkIsType(isType) + ",exists(attributes/" + attParent + "))&fields=thingId,attributes/" + attParent +"&option=size(200)" + options
+    } else {
+        return "/search/things?filter=and(" + checkIsType(isType) + ",exists(attributes/" + attParent + "))&fields=thingId,attributes/" + attParent +"&option=size(200)" + options
+    }
+}
+
+export const queryThingIsType = (thingId: string) => {
+    return queryThings + "/" + thingId + "/attributes/" + attIsType
 }
 
 export const queryAllThings = (isType: boolean, options: string = "") => {
@@ -25,7 +37,11 @@ export const queryAllThings = (isType: boolean, options: string = "") => {
 }
 
 const checkIsType = (isType: boolean) => {
-    return "eq(attributes/" + attIsType + "," + isType + ")"
+    if (isType) {
+        return "eq(attributes/" + attIsType + ",true)"
+    } else {
+        return "not(eq(attributes/" + attIsType + ",true))"
+    }
 }
 
 export const filterIsType = (isType: boolean) => {
@@ -40,8 +56,12 @@ export const queryThingWithId = (thingId: string, isType: boolean) => {
     return queryThings + "/" + thingId + conditionIsType(isType)
 }
 
-export const countThingWithId = (thingId: string, isType: boolean) => {
-    return "/search/things/count" + filterIsType(isType) + ',eq(thingId,"' + thingId + '")'
+export const queryAttributesThingWithId = (thingId: string, isType: boolean) => {
+    return queryThings + "/" + thingId +  "/attributes" + conditionIsType(isType)
+}
+
+export const countThingWithId = (thingId: string) => {
+    return '/search/things/count?filter=eq(thingId,"' + thingId + '")'
 }
 
 export const queryAttributePath = (thingId: string, attributePath: string, isType: boolean) => {
@@ -54,9 +74,9 @@ export const queryParent = (thingId: string, isType: boolean) => {
 
 export const queryChildren = (thingId: string, isType: boolean, options = "") => {
     if (isType) {
-        return "/search/things?filter=exists(attributes/_parents/" + thingId + ")" + options
+        return "/search/things?filter=exists(attributes/_parents/" + thingId + ")" + "," + checkIsType(isType) + options
     } else {
-        return "/search/things?filter=eq(attributes/_parents,'" + thingId + "')" + options
+        return "/search/things?filter=eq(attributes/_parents,'" + thingId + "')" + "," + checkIsType(isType) + options
     }
 }
 

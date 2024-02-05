@@ -4,11 +4,11 @@
 */
 
 import { executePOST, executePATCH, executeDELETE, executeGET, executePUT } from './requests_for_ditto'
-import { queryAllThings, queryParent, queryChildren, queryRootThings, queryThingWithId, querySpecificParent, countThingWithId, queryThings } from './queries'
-import { AllAttributesCannotBeRemovedResponse, BodyCannotBeEmptyResponse, NoDeletionChildrenInTypes, NotParentResponse, RestrictedAttributesResponse, SuccessfulResponse, SuccessfulUnlinkResponse, ThingDoesNotExistResponse, addMessageIfStatusIsNotCorrect, modifyResponseList, modifyResponseThing, statusIsCorrect } from './responses';
+import { queryAllThings, queryParent, queryChildren, queryRootThings, queryThingWithId, querySpecificParent, countThingWithId, queryThings, queryAttributesThingWithId, queryChildThings, queryThingIsType } from './queries'
+import { BodyCannotBeEmptyResponse, NoDeletionChildrenInTypes, NotParentResponse, RestrictedAttributesResponse, SuccessfulResponse, SuccessfulUnlinkResponse, ThingDoesNotExistOrIncorrectIsTypeResponse, ThingDoesNotExistResponse, ThingExistResponse, addMessageIfStatusIsNotCorrect, getItems, modifyResponseList, modifyResponseThing, statusIsCorrect } from './responses';
 import { DittoThing, RequestResponse } from '../types';
-import { hasRestrictedAttributes, copyRestrictedAttributes, getParentAttribute, initAttributes, sameParent, setNullValuesOfFeatures, setParent, removeRestrictedAttributesForThing } from '../attributes/functions';
-import { attCopyOf, attParent } from '../attributes/consts';
+import { hasRestrictedAttributes, copyRestrictedAttributes, getParentAttribute, initAttributes, sameParent, setNullValuesOfFeatures, setParent, removeRestrictedAttributesForThing, arraysAreEquals } from '../attributes/functions';
+import { attCopyOf, attParent, attType } from '../attributes/consts';
 
 
 
@@ -26,7 +26,7 @@ import { attCopyOf, attParent } from '../attributes/consts';
 const merge = (target: any, source: any) => {
     // Check if the property is also an object to copy it iteratively
     for (const key of Object.keys(source)) {
-        if (source[key] instanceof Object) Object.assign(source[key], merge(target[key], source[key]))
+        if (source[key] instanceof Object && target[key] instanceof Object) Object.assign(source[key], merge(target[key], source[key]))
     }
     // Combines the output object with the input object
     Object.assign(target || {}, source)
@@ -53,8 +53,8 @@ const getNameInThingId = (thingId: string): string => {
  * @param isType Determines whether the thing search is about types (true) or twins (false)
  * @returns True if the thing exists, false otherwise. If the request fails, returns the full response.
  */
-const checkThingExists = async (thingId: string, isType: boolean): Promise<boolean | RequestResponse> => {
-    const response = await executeGET(countThingWithId(thingId, isType))
+const checkThingExists = async (thingId: string): Promise<boolean | RequestResponse> => {
+    const response = await executeGET(countThingWithId(thingId))
     if (statusIsCorrect(response.status)) {
         const num = Number(response.message)
         return num > 0
@@ -63,8 +63,18 @@ const checkThingExists = async (thingId: string, isType: boolean): Promise<boole
     }
 }
 
-
-
+const checkThingIsTypeIsCorrect = async (thingId: string, isType: boolean): Promise<boolean | RequestResponse> => {
+    const response = await executeGET(queryThingIsType(thingId))
+    if(statusIsCorrect(response.status)) {
+        return JSON.parse(response.message) === isType
+    } else if (response.status === 404) {
+        const check = await checkThingExists(thingId)
+        if(typeof check === 'boolean' && check){
+            return isType === false
+        } 
+    } 
+    return response
+}
 
 // ---------------------------------------------------------------------------------------------------------------------------------------
 // GET requests - To obtain one or more things
@@ -114,7 +124,8 @@ export const getThing = async (thingId: string, isType: boolean): Promise<Reques
  */
 export const getChildren = async (thingId: string, isType: boolean, options: string = ""): Promise<RequestResponse> => {
     if (options !== "") options = "&option=" + options
-    return modifyResponseList(await executeGET(queryChildren(thingId, isType, options)))
+    console.log("ME HAN LLEGAO OPTIONS???: " + options)
+    return modifyResponseList(await executeGET(queryChildren(thingId, isType, options)), options.includes("cursor("))
 }
 
 
@@ -125,19 +136,22 @@ export const getChildren = async (thingId: string, isType: boolean, options: str
  * @returns Eclipse Ditto's response to the request. If successful, the data of the children belonging to the thing
  */
 export const getAllChildrenOfThing = async (thingId: string, isType: boolean, options: string = ""): Promise<RequestResponse> => {
+    console.log("[Get all children of thing] Extracting children from the thing " + thingId + "...")
+    let children: DittoThing[] = []
+
     let res = modifyResponseList(await executeGET(queryChildren(thingId, isType, "&option=size(200)" + options)))
-    if (res.message.hasOwnProperty("cursor")) {
-        let children = res.message.items
+
+    if (statusIsCorrect(res.status)) {
+        children = children.concat(getItems(res))
         while (res.message.hasOwnProperty("cursor")) {
             res = modifyResponseList(await executeGET(queryChildren(thingId, isType, "&option=size(200)" + options + ",cursor(" + res.message.cursor + ")")), true)
-            children = children.concat(res.message.items)
-        }
-        return {
-            status: res.status,
-            message: children
+            if (statusIsCorrect(res.status)) children = children.concat(getItems(res))
         }
     }
-    return res
+    return {
+        status: res.status,
+        message: children
+    }
 }
 
 /**
@@ -174,13 +188,13 @@ export const getAllParentOfThing = async (thingId: string, isType: boolean): Pro
  * Checks that the body does not contain restricted attributes (if present, an error will be returned)
  * @param body Thing entity scheme
  * @param isType Determines whether the thing is a type (true) or a twin (false)
- * @param type If it is a twin created from a type, it would indicate the identifier of that type.
  * @param parent If the thing is part of a composite thing, the identifiers of its parents are indicated. A type may have more than one parent, while a twin may have only one.
  * @returns 
  */
-export const createThingWithoutSpecificId = async (body: DittoThing, isType: boolean, type?: string, parent?: string): Promise<RequestResponse> => {
+export const createThingWithoutSpecificId = async (body: DittoThing, isType: boolean, parent?: string): Promise<RequestResponse> => {
+    if (body === null || body === undefined || Object.keys(body).length === 0) return BodyCannotBeEmptyResponse
     if (hasRestrictedAttributes(body)) return RestrictedAttributesResponse
-    if (body != null) body = initAttributes(body, isType, type, parent)
+    if (body != null) body = initAttributes(body, isType, parent)
     return modifyResponseThing(await executePOST(queryThings, body))
 }
 
@@ -212,19 +226,22 @@ const setParentOfThing = async (thingId: string, isType: boolean, parentId: stri
  * @param thingId ThingId of the thing you want to update
  * @param isType Determines whether the thing is a type (true) or a twin (false)
  * @param body Changes to be applied to the scheme of the thing
- * @param type If it is a twin created from a type, it would indicate the identifier of that type.
- * @param newParentId 
+ * @param newParentId ThingId of the parent of the new thing, if any
  * @param numChild 
+ * @param checkRestricted
  * @returns 
  */
-export const updateThing = async (thingId: string, isType: boolean, body?: DittoThing, type?: string, newParentId?: string, numChild: number = 1): Promise<RequestResponse> => {
+export const updateThing = async (thingId: string, isType: boolean, body?: DittoThing, newParentId?: string, numChild: number = 1, checkRestricted: boolean = true): Promise<RequestResponse> => {
     let finalResponse = Object.assign({}, SuccessfulResponse)
+    console.log("[Create/Update thing] Checking if the thing " + thingId + " exists...")
     const response = await executeGET(queryThingWithId(thingId, isType))
 
     if (body && Object.keys(body).length > 0) {
-        if (hasRestrictedAttributes(body)) return RestrictedAttributesResponse
+        console.log("[Create/Update thing] Checking if body has restricted attributes...")
+        if (checkRestricted && hasRestrictedAttributes(body)) return RestrictedAttributesResponse
         let thing: DittoThing = {}
         if (statusIsCorrect(response.status)) {
+            console.log("[Create/Update thing] Updating data of the existing thing...")
             // Set the new data of the thing, keeping the restricted attributes it had
             thing = copyRestrictedAttributes(response.message, body)
 
@@ -232,8 +249,11 @@ export const updateThing = async (thingId: string, isType: boolean, body?: Ditto
             if (newParentId && !sameParent(thing, newParentId, isType, numChild)) {
                 setParent(thing, newParentId, isType, numChild)
             }
+        } else if (response.status === 404) {
+            console.log("[Create/Update thing] Initializing new thing...")
+            thing = initAttributes(body, isType, newParentId, numChild)
         } else {
-            thing = initAttributes(body, isType, type, newParentId, numChild)
+            return response
         }
 
         // Update or create the thing in Eclipse Ditto
@@ -241,10 +261,12 @@ export const updateThing = async (thingId: string, isType: boolean, body?: Ditto
         return modifyResponseThing(responsePut)
 
     } else if (newParentId && statusIsCorrect(response.status)) {
+        console.log("[Create/Update thing] Updating only the parent of the thing...")
         return setParentOfThing(thingId, isType, newParentId, finalResponse, numChild)
+    } else if (response.status === 404) {
+        return BodyCannotBeEmptyResponse
     }
-
-    return BodyCannotBeEmptyResponse
+    return response
 }
 
 
@@ -261,9 +283,9 @@ export const updateThing = async (thingId: string, isType: boolean, body?: Ditto
  * @returns 
  */
 const updateThingAndHisParent = async (thingId: string, isType: boolean, childId: string, body?: DittoThing, numChild: number = 1): Promise<RequestResponse> => {
-    const checkParent = await checkThingExists(thingId, isType)
+    const checkParent = await checkThingExists(thingId)
     if (checkParent) {
-        return await updateThing(childId, isType, body, undefined, thingId, numChild)
+        return await updateThing(childId, isType, body, thingId, numChild)
     } else if (checkParent === false) {
         return ThingDoesNotExistResponse
     } else {
@@ -282,12 +304,26 @@ const updateThingAndHisParent = async (thingId: string, isType: boolean, childId
  */
 export const patchThing = async (thingId: string, body: DittoThing, isType: boolean): Promise<RequestResponse> => {
     if (hasRestrictedAttributes(body)) return RestrictedAttributesResponse
-    if (body.attributes == null) return AllAttributesCannotBeRemovedResponse
-    const check = await checkThingExists(thingId, isType)
-    if (typeof check !== "boolean") {
-        return check
-    } else if (check === false){
-        body = initAttributes(body, isType)
+
+    const thingData = await executeGET(queryThingWithId(thingId, isType))
+    if (statusIsCorrect(thingData.status)) {
+        if (body.attributes !== undefined && body.attributes == null) {
+            body.attributes = {}
+            body = copyRestrictedAttributes(thingData.message, body) // It's ok if you want to delete all attributes, but I'll leave the restricted ones.
+            const res = modifyResponseThing(await executePUT(queryAttributesThingWithId(thingId, isType), body.attributes))
+            console.log(Object.keys(body))
+            if (!statusIsCorrect(res.status) || Object.keys(body).length === 1) {
+                return res
+            } else {
+                delete body.attributes
+            }
+        }
+    } else {
+        if (body === null || body === undefined || Object.keys(body).length < 1) {
+            return BodyCannotBeEmptyResponse
+        } else {
+            body = initAttributes(body, isType)
+        }
     }
     return modifyResponseThing(await executePATCH(queryThingWithId(thingId, isType), body))
 }
@@ -313,6 +349,7 @@ const duplicateSingleThing = async (thingId: string, isType: boolean, newThingId
     // If the data of the thing to duplicate is not available, a query is made to Eclipse Ditto to obtain it
     // This IF should not be activated when duplicating recursively, it is only set to get the data if it is called from another function that does not provide it
     if (Object.keys(thingData).length === 0) {
+        console.log("[Duplicate thing] Getting the data from the thing " + thingId + "...")
         let getThingResponse = await getThing(thingId, isType)
         if (statusIsCorrect(getThingResponse.status)) {
             thingData = getThingResponse.message
@@ -322,22 +359,23 @@ const duplicateSingleThing = async (thingId: string, isType: boolean, newThingId
     }
 
     // Merge data and prepare thing data to create it
+    console.log("[Duplicate thing] Process the data from the thing before creating the new one...")
     thingData = removeRestrictedAttributesForThing(thingData)
     if (dataToMerge) thingData = merge(thingData, dataToMerge)
     thingData = setNullValuesOfFeatures(thingData)
     if (thingData.thingId) delete thingData.thingId
 
     // If the copied thing is a type and the final thing is a twin, then it has been instantiated and must be indicated in the corresponding attribute
-    let type = undefined
+    if (!thingData.attributes) thingData.attributes = {}
     if (isType) {
-        type = thingId
+        thingData.attributes[attType] = thingId
     } else {
-        if (!thingData.attributes) thingData.attributes = {}
         thingData.attributes[attCopyOf] = thingId
     }
 
+    console.log("[Duplicate thing] Creating thing " + newThingId + " with data from " + thingId)
     //This function only creates twins, not types. That's why the isType is always false
-    return await updateThing(newThingId, false, thingData, type, parentId)
+    return await updateThing(newThingId, false, thingData, parentId, undefined, false)
 }
 
 
@@ -355,14 +393,29 @@ const duplicateSingleThing = async (thingId: string, isType: boolean, newThingId
  * @returns Eclipse Ditto's response to the request
  */
 const duplicateThingRecursive = async (thingId: string, isType: boolean, newThingId: string, dataToCopy?: DittoThing, dataToMerge?: DittoThing, parentId?: string): Promise<RequestResponse> => {
+    console.log("[Duplicate thing] Duplicating thing " + thingId + "...")
+
+    console.log("[Duplicate thing] Checking if a thing exists with id " + newThingId + "...")
+    const check = await checkThingExists(newThingId)
+    if (typeof check !== 'boolean') {
+        console.log("[Duplicate thing] Error checking if a thing with id " + newThingId + " exists")
+        return check
+    } else if (check) {
+        console.log("[Duplicate thing] Cannot be duplicated because a thing with id " + newThingId + " already exists")
+        return ThingExistResponse
+    }
+
+    console.log("[Duplicate thing] No thing exists with id " + newThingId)
     let thingData = (dataToCopy) ? { ...dataToCopy } : {}
 
     // If the data of the thing to duplicate is not available, a query is made to Eclipse Ditto to obtain it
     if (Object.keys(thingData).length === 0) {
+        console.log("[Duplicate thing] Getting the data from the thing " + thingId + "...")
         let getThingResponse = await getThing(thingId, isType)
         if (statusIsCorrect(getThingResponse.status)) {
             thingData = getThingResponse.message
         } else {
+            console.log("[Duplicate thing] Error getting the data from the thing " + thingId)
             return getThingResponse
         }
     }
@@ -371,22 +424,24 @@ const duplicateThingRecursive = async (thingId: string, isType: boolean, newThin
     let finalResponse = Object.assign({}, SuccessfulResponse)
 
     // We create the twin from the thing, mixing the given data if any and associating it with its parent if any
+    console.log("[Duplicate thing] Duplicate the thing without taking into account the compositionality...")
     let responseUpdate = await duplicateSingleThing(thingId, isType, newThingId, thingData, dataToMerge, parentId)
-    finalResponse = addMessageIfStatusIsNotCorrect(responseUpdate, finalResponse, responseUpdate.message)
+    if (!statusIsCorrect(responseUpdate.status)) return responseUpdate
 
     // The children are obtained
+    //console.log("[Duplicate thing] Getting the children of the thing " + thingId + "...")
     let childrenRequest = await getAllChildrenOfThing(thingId, isType)
     let children: DittoThing[] = childrenRequest.message
 
     // I create twins for all the children, considering that if I am working with types I can have more than one child with the same scheme
     for (let child of children) {
+        const childThingId = (child.thingId) ? child.thingId : "" // This is only because otherwise it complains that it may be undefined, but it should never be undefined in this case
+        console.log("[Duplicate thing] Duplicate child  " + childThingId + "...")
         const parents: any = getParentAttribute(child)
         const num: number = (isType && parents.hasOwnProperty(thingId)) ? parents[thingId] : 1
         for (let i = 0; i < num; i++) {
-            const childThingId = (child.thingId) ? child.thingId : "" // This is only because otherwise it complains that it may be undefined, but it should never be undefined in this case
             let newId = parentId + ":" + getNameInThingId(childThingId)
             newId = (num > 1) ? (newId + '_' + (i + 1)) : newId
-
             const response = await duplicateThingRecursive(childThingId, isType, newId, child, undefined, newThingId)
             finalResponse = addMessageIfStatusIsNotCorrect(response, finalResponse, response.message)
         }
@@ -472,15 +527,25 @@ export const unlinkAllParentOfThing = async (thingId: string, isType: boolean): 
  * @returns Eclipse Ditto's response to the request
  */
 export const unlinkAllChildrenOfThing = async (thingId: string, isType: boolean): Promise<RequestResponse> => {
+    console.log("[Unlink all children] Checking entity corresponds to the received thing...")
+    const check = await checkThingIsTypeIsCorrect(thingId, isType)
+    if (typeof check === 'boolean') {
+        if(!check) return ThingDoesNotExistOrIncorrectIsTypeResponse
+    } else {
+        return check
+    }
+
     // As multiple requests will be made to Eclipse Ditto, their responses will be merged into a single response
     let finalResponse = Object.assign({}, SuccessfulResponse)
 
+    console.log("[Unlink all children] Getting all children of the thing " + thingId + "...")
     const responseChildren = await getAllChildrenOfThingOnlyIdAndParent(thingId, isType)
     if (statusIsCorrect(responseChildren.status)) {
-        const children: DittoThing[] = responseChildren.message
+        const children: DittoThing[] = getItems(responseChildren)
         if (children) {
             for (let child of children) {
                 if (child.thingId) {
+                    console.log("[Unlink all children] Unlinking child " + thingId + "...")
                     const responseUnlink = await unlinkChildOfThing(thingId, child.thingId, isType,
                         (child.attributes && child.attributes.hasOwnProperty(attParent)) ? child.attributes[attParent] : undefined)
                     finalResponse = addMessageIfStatusIsNotCorrect(responseUnlink, finalResponse, responseUnlink.message)
@@ -489,12 +554,79 @@ export const unlinkAllChildrenOfThing = async (thingId: string, isType: boolean)
         }
         return finalResponse
     } else {
+        console.log("[Unlink all children] ERROR in getting the children of the thing " + thingId + "...")
         return responseChildren
     }
 }
 
 
+/**
+ * 
+ * @param isType Determines whether the thing is a type (true) or a twin (false)
+ * @returns Eclipse Ditto's response to the request
+ */
+export const fixCompositionality = async (isType: boolean) => {
+    let finalResponse: RequestResponse = { ...SuccessfulResponse }
+    const parentExist: { [parent: string]: boolean } = {}
+    console.log("[Fix compositionality] Getting things with the parents attribute...")
+    let res: RequestResponse | undefined = await executeGET(queryChildThings(isType)) // Take out all the things that have a defined parent
 
+    while (res !== undefined) {
+        console.log("[Fix compositionality] Analysing response...")
+        if (statusIsCorrect(res.status)) {
+            const msg: DittoThing[] = getItems(res)
+            for (const thing of msg) {
+                if (thing.thingId && thing.attributes && thing.attributes[attParent]) {
+                    console.log("[Fix compositionality] Checking parents of the thing " + thing.thingId + "...")
+
+                    let parentsId: string[] = []
+                    let newsParentsId: string[] = []
+                    if (isType) {
+                        const parents: { [key: string]: number } = thing.attributes[attParent]
+                        parentsId = Object.keys(parents)
+                    } else {
+                        parentsId = [thing.attributes[attParent]]
+                    }
+                    for (const parentId of parentsId) {
+                        console.log("[Fix compositionality] Checking if the parent " + parentId + " exists...")
+                        let exist = true // In case of an error, we will not delete the parent
+                        if (parentExist.hasOwnProperty(parentId)) {
+                            exist = parentExist[parentId]
+                        } else {
+                            const resParent = await checkThingExists(parentId)
+                            if (typeof resParent === 'boolean') {
+                                exist = resParent
+                                parentExist[parentId] = resParent
+                            } else {
+                                finalResponse = addMessageIfStatusIsNotCorrect(resParent, finalResponse, "ERROR when checking the thing " + parentId + ": " + resParent.message)
+                            }
+                        }
+                        if (exist) newsParentsId = [...newsParentsId, parentId]
+                    }
+                    if (!arraysAreEquals(parentsId, newsParentsId)) {
+                        console.log("[Fix compositionality] The attribute parents is NOT correct")
+                        let newParentsAttr: any = 'null'
+                        if (isType) { // If it does not match as a twin, the parent does not exist
+                            const parents: { [key: string]: number } = thing.attributes[attParent]
+                            newParentsAttr = Object.fromEntries(Object.entries(parents).filter(([key]) => newsParentsId.includes(key)));
+                        }
+                        console.log("[Fix compositionality] Setting the parents attribute from " + JSON.stringify(thing.attributes[attParent]) + " to " + JSON.stringify(newParentsAttr))
+                        const responsePut = await executePUT(queryParent(thing.thingId, isType), newParentsAttr)
+                        addMessageIfStatusIsNotCorrect(responsePut, finalResponse, "ERROR when updating the parent of the thing " + thing.thingId + ": " + responsePut.message)
+                        if (statusIsCorrect(responsePut.status)) finalResponse = { ...finalResponse, message: finalResponse.message + ("Thing with ID " + thing.thingId + " has modified its parents attribute from " + JSON.stringify(thing.attributes[attParent]) + " to " + JSON.stringify(newParentsAttr)) + ". " }
+                    } else {
+                        console.log("[Fix compositionality] The attribute parents is correct")
+                    }
+                }
+            }
+            res = (res.message.hasOwnProperty("cursor")) ? await executeGET(queryChildThings(isType, ",cursor(" + res.message.cursor + ")")) : undefined
+        } else {
+            addMessageIfStatusIsNotCorrect(res, finalResponse, "ERROR querying for things that have a parent: " + res.message)
+            res = undefined
+        }
+    }
+    return finalResponse
+}
 
 // ---------------------------------------------------------------------------------------------------------------------------------------
 // DELETE requests - To delete things
@@ -509,9 +641,11 @@ export const unlinkAllChildrenOfThing = async (thingId: string, isType: boolean)
  * @returns Eclipse Ditto's responses to the requests
  */
 export const deleteThingWithoutChildren = async (thingId: string, isType: boolean): Promise<RequestResponse> => {
+    console.log("[Delete thing without children] Unlinking all children of thing " + thingId + " before deletion")
     const responseUnlink = await unlinkAllChildrenOfThing(thingId, isType)
 
     if (statusIsCorrect(responseUnlink.status)) {
+        console.log("[Delete thing without children] Deleting thing " + thingId)
         const responseDELETE = await executeDELETE(queryThingWithId(thingId, isType))
         let finalResponse = addMessageIfStatusIsNotCorrect(responseDELETE, responseDELETE, "ERROR deleting thing " + thingId + ": " + responseDELETE.message)
         if (statusIsCorrect(finalResponse.status)) finalResponse.message = "Thing " + thingId + " deleted correctly without deleting their children."
@@ -531,14 +665,23 @@ export const deleteThingWithoutChildren = async (thingId: string, isType: boolea
  */
 export const deleteThingAndChildren = async (thingId: string, isType: boolean): Promise<RequestResponse> => {
     let finalResponse = Object.assign({}, SuccessfulResponse)
-    if(isType) return NoDeletionChildrenInTypes
+    if (isType) return NoDeletionChildrenInTypes
+
+    console.log("[Unlink all children] Checking entity corresponds to the received thing...")
+    const check = await checkThingIsTypeIsCorrect(thingId, isType)
+    if (typeof check === 'boolean') {
+        if(!check) return ThingDoesNotExistOrIncorrectIsTypeResponse
+    } else {
+        return check
+    }
 
     // Delete all children recursively
+    console.log("[Delete thing with children] Deleting all children of thing " + thingId + " before deletion")
     const responseChildren = await getAllChildrenOfThingOnlyIdAndParent(thingId, isType)
     if (statusIsCorrect(responseChildren.status)) {
-        const children:DittoThing[] = responseChildren.message
+        const children: DittoThing[] = getItems(responseChildren)
         for (let child of children) {
-            if(child.thingId){
+            if (child.thingId) {
                 const response = await deleteThingAndChildren(child.thingId, isType)
                 finalResponse = addMessageIfStatusIsNotCorrect(response, finalResponse, response.message)
             }
@@ -546,7 +689,7 @@ export const deleteThingAndChildren = async (thingId: string, isType: boolean): 
     }
 
     // Delete the thing only if all its children have been successfully deleted
-    if(statusIsCorrect(finalResponse.status)) {
+    if (statusIsCorrect(finalResponse.status)) {
         const responseDELETE = await executeDELETE(queryThingWithId(thingId, isType))
         finalResponse = addMessageIfStatusIsNotCorrect(responseDELETE, finalResponse, "ERROR deleting thing " + thingId + "\n")
         if (statusIsCorrect(finalResponse.status)) finalResponse.message = "Thing " + thingId + " and their children deleted correctly."

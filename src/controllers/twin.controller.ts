@@ -4,7 +4,7 @@
 */
 
 import { Request, Response } from "express"
-import { createThingWithoutSpecificId, deleteThingAndChildren, deleteThingWithoutChildren, duplicateThing, getAllChildrenOfThing, getAllParentOfThing, getAllRootThings, getChildren, getThing, patchThing, unlinkAllChildrenOfThing, unlinkAllParentOfThing, updateThing } from "../auxiliary/api_calls/dittoThing"
+import { createThingWithoutSpecificId, deleteThingAndChildren, deleteThingWithoutChildren, duplicateThing, fixCompositionality, getAllChildrenOfThing, getAllParentOfThing, getAllRootThings, getChildren, getThing, patchThing, unlinkAllChildrenOfThing, unlinkAllParentOfThing, updateThing } from "../auxiliary/api_calls/dittoThing"
 
 
 
@@ -35,6 +35,19 @@ export const twinController = {
         res.status(response.status || 500).json(response.message)
     },
 
+
+    //-------------------
+    // fix
+    //-------------------
+
+    fix: async (req: Request, res: Response) => {
+        // #swagger.tags = ['Twins']
+        console.log("PUT fix twins - " + req)
+
+        let response = await fixCompositionality(isType)
+        res.status(response.status || 500).json(response.message)
+    },
+
     //-------------------
     // /twins/{twinId}
     //-------------------
@@ -59,7 +72,7 @@ export const twinController = {
         // #swagger.tags = ['Twins']
         const body = req.body
         const twinId = req.params.twinId
-        let response = await patchThing(twinId, body, isType)
+        const response = await patchThing(twinId, body, isType)
         res.status(response.status || 500).json(response.message)
     },
 
@@ -98,7 +111,7 @@ export const twinController = {
         const body = req.body
         const twinId = req.params.twinId
         const childId = req.params.childId
-        let response = await updateThing(childId, isType, body, undefined, twinId)
+        let response = await updateThing(childId, isType, body, twinId)
         res.status(response.status || 500).json(response.message)
     },
 
@@ -146,7 +159,7 @@ export const twinController = {
         const body = req.body
         let response = await duplicateThing(twinId, isType, copyId, body)
         res.status(response.status || 500).json(response.message)
-    }
+    },
 
     
     //-------------------

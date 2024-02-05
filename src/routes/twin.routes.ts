@@ -5,6 +5,7 @@ export const router = Router()
 
 router.get("/", twinController.getRootTwins)
 router.post("/", twinController.postTwin)
+router.put("/fix", twinController.fix)
 
 // twinId
 router.get("/:twinId", twinController.getTwinById)
@@ -32,3 +33,4 @@ router.patch("/:twinId/parent/unlink", twinController.unlinkParentAndTwin)
 router.post("/:twinId/duplicate/:copyId", twinController.duplicateTwin)
 //Duplicate keep hidden fields
 //router.post("/:twinId/duplicate/:copyId/keepHiddenFields", twinController.duplicateTwinKeepHiddenFields)
+

@@ -48,6 +48,19 @@
         }
       }
     },
+    "/api/twins/fix": {
+      "put": {
+        "tags": [
+          "Twins"
+        ],
+        "description": "",
+        "responses": {
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
     "/api/twins/{twinId}": {
       "get": {
         "tags": [
@@ -332,6 +345,19 @@
             "type": "string"
           }
         ],
+        "responses": {
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/types/fix": {
+      "put": {
+        "tags": [
+          "Types"
+        ],
+        "description": "",
         "responses": {
           "500": {
             "description": "Internal Server Error"

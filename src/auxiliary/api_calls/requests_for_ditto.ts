@@ -10,11 +10,36 @@ const tokenAPI: string = Buffer.from(`${process.env.DITTO_USERNAME_API}:${proces
 const tokenDevops: string = Buffer.from(`${process.env.DITTO_USERNAME_DEVOPS}:${process.env.DITTO_PASSWORD_DEVOPS}`, 'utf8').toString('base64')
 
 const pathAPI: string = "/api/2"
+const all_logs = process.env.ALL_LOGS == 'true'
 
-export const executeRequestWithoutData = async (functionRequest: (url: string, config?: any) => Promise<AxiosResponse>, token: string, path: string = ""): Promise<RequestResponse> => {
-    console.log("Executing request without body in Eclipse Ditto...")
+
+enum Method {
+    GET = "GET",
+    POST = "POST",
+    PUT = "PUT",
+    PATCH = "PATCH",
+    DELETE = "DELETE"
+}
+
+const getFunction = (method: Method) => {
+    switch (method) {
+        case Method.POST:
+            return axios.post
+        case Method.PUT:
+            return axios.put
+        case Method.PATCH:
+            return axios.patch
+        case Method.DELETE:
+            return axios.delete
+        default:
+            return axios.get
+    }
+}
+
+export const executeRequestWithoutData = async (method: Method, token: string, path: string = ""): Promise<RequestResponse> => {
+    if(all_logs) console.log("[Request execution in Eclipse Ditto] WITHOUT DATA. " + method.toString() + " " + path)
     try {
-        const response = await functionRequest(
+        const response = await getFunction(method)(
             process.env.DITTO_URI_THINGS + path,
             {
                 headers: {
@@ -23,19 +48,17 @@ export const executeRequestWithoutData = async (functionRequest: (url: string, c
                 }
             }
         )
-        console.log('Ditto response: \n', response)
+        if(all_logs) console.log('[Request execution in Eclipse Ditto] Response data: \n', JSON.stringify(response.data))
         return {
             status: response.status,
             message: response.data
         }
     } catch (err: any) {
-        console.log("ERROR: executeRequestWithoutData")
+        if(all_logs) console.log("[Request execution in Eclipse Ditto] ERROR")
         if (err.response) {
             // The request was made and the server responded with a status code
             // that falls out of the range of 2xx
-            console.log(err.response.data);
-            console.log(err.response.status);
-            console.log(err.response.headers);
+            if(all_logs) console.log(err.response.data);
             return err.response
         } else if (err.request) {
             // The request was made but no response was received
@@ -57,10 +80,10 @@ export const executeRequestWithoutData = async (functionRequest: (url: string, c
     }
 };
 
-export const executeRequestWithData = async (functionRequest: any, token: string, path: string = "", data: any = {}, contentType: any = "application/json",): Promise<RequestResponse> => {
-    console.log("Executing request with body in Eclipse Ditto...")
+export const executeRequestWithData = async (method: Method, token: string, path: string = "", data: any = {}, contentType: any = "application/json"): Promise<RequestResponse> => {
+    if(all_logs) console.log("[Request execution in Eclipse Ditto] WITH DATA. " + method.toString() + " " + path)
     try {
-        const response = await functionRequest(
+        const response = await getFunction(method)(
             process.env.DITTO_URI_THINGS + path,
             data,
             {
@@ -71,19 +94,17 @@ export const executeRequestWithData = async (functionRequest: any, token: string
                 }
             }
         )
-        console.log('Ditto response: \n', response)
+        if(all_logs) console.log('[Request execution in Eclipse Ditto] Response data: \n', JSON.stringify(response.data))
         return {
             status: response.status,
             message: response.data
         }
     } catch (err: any) {
-        console.log("ERROR: executeRequestWithData")
+        if(all_logs) console.log("[Request execution in Eclipse Ditto] ERROR")
         if (err.response) {
             // The request was made and the server responded with a status code
             // that falls out of the range of 2xx
-            console.log(err.response.data);
-            console.log(err.response.status);
-            console.log(err.response.headers);
+            if(all_logs) console.log(err.response.data);
             return err.response
         } else if (err.request) {
             // The request was made but no response was received
@@ -106,29 +127,29 @@ export const executeRequestWithData = async (functionRequest: any, token: string
 };
 
 export const executePOST = async (path: string = "", data: any = {}): Promise<RequestResponse> => {
-    return await executeRequestWithData(axios.post, tokenAPI, pathAPI + path, data = data);
+    return await executeRequestWithData(Method.POST, tokenAPI, pathAPI + path, data = data);
 };
 
 export const executePOSTTextPlain = async (path: string = "", data: any): Promise<RequestResponse> => {
-    return await executeRequestWithData(axios.post, tokenAPI, (pathAPI + path), data, "text/plain")
+    return await executeRequestWithData(Method.POST, tokenAPI, (pathAPI + path), data, "text/plain")
 };
 
 export const executePUT = async (path: string = "", data: any = {}): Promise<RequestResponse> => {
-    return await executeRequestWithData(axios.put, tokenAPI, pathAPI + path, data)
+    return await executeRequestWithData(Method.PUT, tokenAPI, pathAPI + path, data)
 }
 
 export const executePATCH = async (path: string = "", data: any = {}): Promise<RequestResponse> => {
-    return await executeRequestWithData(axios.patch, tokenAPI, pathAPI + path, data, "application/merge-patch+json")
+    return await executeRequestWithData(Method.PATCH, tokenAPI, pathAPI + path, data, "application/merge-patch+json")
 }
 
 export const executeGET = async (path: string = ""): Promise<RequestResponse> => {
-    return await executeRequestWithoutData(axios.get, tokenAPI, pathAPI + path)
+    return await executeRequestWithoutData(Method.GET, tokenAPI, pathAPI + path)
 }
 
 export const executeDELETE = async (path: string = ""): Promise<RequestResponse> => {
-    return await executeRequestWithoutData(axios.delete, tokenAPI, pathAPI + path)
+    return await executeRequestWithoutData(Method.DELETE, tokenAPI, pathAPI + path)
 }
 
 export const executePOST_DEVOPS = async (path: string = "", data: any = {}): Promise<RequestResponse> => {
-    return await executeRequestWithData(axios.post, tokenDevops, path, data)
+    return await executeRequestWithData(Method.POST, tokenDevops, path, data)
 }
