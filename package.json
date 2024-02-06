@@ -5,7 +5,7 @@
   "main": "app.ts",
   "scripts": {
     "dev": "nodemon -r dotenv/config src/app.ts",
-    "start": "node -r dotenv/config src/app.ts",
+    "start": "ts-node -r dotenv/config src/app.ts",
     "test": "jest",
     "swagger": "node ./swagger.js"
   },
