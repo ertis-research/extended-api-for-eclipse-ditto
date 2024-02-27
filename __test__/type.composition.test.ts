@@ -822,3 +822,93 @@ describe('Compositional types - Fix', () => {
 
 
 })
+
+describe('Compositional types - Create twin from type with children', () => {
+    let parentId = "test:parent"
+    let childName = "child"
+    let childId = "test:" + childName
+    let newId = "test:new_twin"
+
+    beforeEach(async () => {
+        await createThing(parentId, typeData)
+        await createThing((childId + "1"), { attributes: { ...isType, _parents: { [parentId] : 1}, ...attributes_data }, ...rest_data })
+        await createThing((childId + "2"), { attributes: { ...isType, _parents: { [parentId] : 2, "other" : 3}}, ...rest_data })
+        //await createThing((child + "3"), { attributes: { _isType: false, _parents: parentId, ...attributes_data }, ...rest_data })
+        try { await deleteThing(newId) } catch (e: any) { } // Clean up
+        try { await deleteThing((newId + ":" + childName + "1")) } catch (e: any) { } // Clean up
+        try { await deleteThing((newId + ":" + childName + "2_1")) } catch (e: any) { } // Clean up
+        try { await deleteThing((newId + ":" + childName + "2_2")) } catch (e: any) { } // Clean up
+        await new Promise(r => setTimeout(r, 3000)) // This is very ugly, but Eclipse Ditto needs a few seconds to process the new twins
+    });
+
+    afterEach(async () => {
+        //await deleteThing((child + "3"))
+        await deleteThing((childId + "2"))
+        await deleteThing((childId + "1"))
+        await deleteThing(parentId)
+        try { await deleteThing(newId) } catch (e: any) { } // Clean up
+        try { await deleteThing((newId + ":" + childName + "1")) } catch (e: any) { } // Clean up
+        try { await deleteThing((newId + ":" + childName + "2_1")) } catch (e: any) { } // Clean up
+        try { await deleteThing((newId + ":" + childName + "2_2")) } catch (e: any) { } // Clean up
+    });
+
+    test('POST create twin from type with children', async () => {
+        const res = await axios.post(url + "/api/types/" + parentId + "/create/" + newId)
+
+        expect(res).toBeTruthy()
+        expect(res.status).toBe(200)
+
+        let null_rest_data: any = { ...rest_data }
+        null_rest_data.features.feature1.properties.value = null
+
+        let check = await getThingData(newId)
+        expect(check).toBeTruthy()
+        expect(check.data).toStrictEqual({
+            thingId: newId,
+            attributes: {
+                type: parentId,
+                _isType: false,
+                ...attributes_data
+            },
+            ...null_rest_data
+        })
+
+        check = await getThingData((newId + ":" + childName + "1"))
+        expect(check).toBeTruthy()
+        expect(check.data).toStrictEqual({
+            thingId: (newId + ":" + childName + "1"),
+            attributes: {
+                type: childId + "1",
+                _isType: false,
+                _parents: newId,
+                ...attributes_data
+            },
+            ...null_rest_data
+        })
+
+        check = await getThingData((newId + ":" + childName + "2_1"))
+        expect(check).toBeTruthy()
+        expect(check.data).toStrictEqual({
+            thingId: (newId + ":" + childName + "2_1"),
+            attributes: {
+                type: childId + "2",
+                _isType: false,
+                _parents: newId
+            },
+            ...null_rest_data
+        })
+
+        check = await getThingData((newId + ":" + childName + "2_2"))
+        expect(check).toBeTruthy()
+        expect(check.data).toStrictEqual({
+            thingId: (newId + ":" + childName + "2_2"),
+            attributes: {
+                type: childId + "2",
+                _isType: false,
+                _parents: newId
+            },
+            ...null_rest_data
+        })
+    }, 100000)
+
+})
