@@ -87,7 +87,7 @@ const checkThingIsTypeIsCorrect = async (thingId: string, isType: boolean): Prom
  * @returns Eclipse Ditto's response to the request. If successful, all types or twins, depending on isType, that have no parent (called root things) 
  */
 export const getAllRootThings = async (isType: boolean, options: string = ""): Promise<RequestResponse> => {
-    if (options !== "") options = "&option=" + options
+    options = (options !== "") ? "&option=" + options : "&option=size(200)"
     return modifyResponseList(await executeGET(queryRootThings(isType, options)))
 }
 

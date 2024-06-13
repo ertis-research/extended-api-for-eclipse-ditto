@@ -10,9 +10,9 @@ export const queryThings = "/things"
 
 export const queryRootThings = (isType: boolean, options: string = "") => {
     if (isType) {
-        return "/search/things?filter=and(eq(attributes/" + attIsType + ",true),or(not(exists(attributes/" + attParent + ")),eq(attributes/" + attParent + ",null)))&option=size(200)" + options
+        return "/search/things?filter=and(eq(attributes/" + attIsType + ",true),or(not(exists(attributes/" + attParent + ")),eq(attributes/" + attParent + ",null)))" + options
     } else {
-        return "/search/things?filter=and(not(eq(attributes/" + attIsType + ",true)),or(not(exists(attributes/" + attParent + ")),eq(attributes/" + attParent + ",null)))&option=size(200)" + options
+        return "/search/things?filter=and(not(eq(attributes/" + attIsType + ",true)),or(not(exists(attributes/" + attParent + ")),eq(attributes/" + attParent + ",null)))" + options
     }
 }
 
